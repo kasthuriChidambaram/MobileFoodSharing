@@ -29,7 +29,7 @@
         </receiver>
         
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivityJava"
             android:exported="true"
             android:theme="@style/Theme.Unavify">
             <intent-filter>
@@ -37,6 +37,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.auth.LoginScreenJava" />
+        <activity android:name=".ui.home.HomeScreenJava" />
     </application>
 
 </manifest>
