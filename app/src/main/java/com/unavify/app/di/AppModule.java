@@ -1,6 +1,7 @@
 package com.unavify.app.di;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
@@ -14,5 +15,11 @@ public class AppModule {
     @Singleton
     public FirebaseAuth provideFirebaseAuth() {
         return FirebaseAuth.getInstance();
+    }
+
+    @Provides
+    @Singleton
+    public FirebaseFirestore provideFirebaseFirestore() {
+        return FirebaseFirestore.getInstance();
     }
 } 

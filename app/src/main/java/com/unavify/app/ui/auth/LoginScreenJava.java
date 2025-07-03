@@ -197,7 +197,7 @@ public class LoginScreenJava extends AppCompatActivity {
     
     private void onLoginSuccess() {
         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, com.unavify.app.ui.home.HomeScreenJava.class);
+        Intent intent = new Intent(this, com.unavify.app.ui.profile.ProfileActivity.class);
         startActivity(intent);
         finish();
     }

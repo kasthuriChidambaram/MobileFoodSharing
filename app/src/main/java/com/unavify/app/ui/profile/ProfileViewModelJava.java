@@ -4,6 +4,8 @@ import android.net.Uri;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import com.google.firebase.auth.FirebaseAuth;
+import com.unavify.app.data.repository.AuthRepositoryJava;
 import com.unavify.app.data.repository.UserProfileRepository;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import java.util.concurrent.ExecutorService;
@@ -16,16 +18,20 @@ import javax.inject.Inject;
 public class ProfileViewModelJava extends ViewModel {
     
     private final UserProfileRepository repository;
+    private final AuthRepositoryJava authRepository;
     private final ExecutorService executorService;
     
     // State management using LiveData
     private final MutableLiveData<Boolean> profileExists = new MutableLiveData<>();
     private final MutableLiveData<UsernameCheckState> usernameCheck = new MutableLiveData<>();
     private final MutableLiveData<ProfileSaveResult> saveResult = new MutableLiveData<>();
+    private final MutableLiveData<UserProfile> userProfile = new MutableLiveData<>();
+    private final MutableLiveData<ProfileSaveResult> signOutResult = new MutableLiveData<>();
     
     @Inject
-    public ProfileViewModelJava(UserProfileRepository repository) {
+    public ProfileViewModelJava(UserProfileRepository repository, AuthRepositoryJava authRepository) {
         this.repository = repository;
+        this.authRepository = authRepository;
         this.executorService = Executors.newSingleThreadExecutor();
     }
     
@@ -40,6 +46,14 @@ public class ProfileViewModelJava extends ViewModel {
     
     public LiveData<ProfileSaveResult> getSaveResult() {
         return saveResult;
+    }
+    
+    public LiveData<UserProfile> getUserProfile() {
+        return userProfile;
+    }
+    
+    public LiveData<ProfileSaveResult> getSignOutResult() {
+        return signOutResult;
     }
     
     public void checkProfileExists() {
@@ -96,6 +110,56 @@ public class ProfileViewModelJava extends ViewModel {
     
     public void clearUsernameCheck() {
         usernameCheck.setValue(null);
+    }
+    
+    public void loadUserProfile() {
+        executorService.execute(() -> {
+            try {
+                // Get current user from Firebase Auth
+                String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+                
+                if (userId != null) {
+                    String phoneNumber = FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber();
+                    
+                    // Try to get profile from repository
+                    Object profile = repository.getCurrentUserProfile();
+                    
+                    if (profile != null) {
+                        // Convert to UserProfile if needed
+                        UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
+                        this.userProfile.postValue(userProfile);
+                    } else {
+                        // Create basic profile with available info
+                        UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
+                        this.userProfile.postValue(userProfile);
+                    }
+                }
+            } catch (Exception e) {
+                // Handle error - create basic profile
+                String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : "unknown";
+                String phoneNumber = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+                    FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : "unknown";
+                
+                UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
+                this.userProfile.postValue(userProfile);
+            }
+        });
+    }
+    
+    public void signOut() {
+        signOutResult.setValue(new ProfileSaveResult.Loading());
+        
+        executorService.execute(() -> {
+            try {
+                authRepository.signOut();
+                // Sign out is always successful if no exception is thrown
+                signOutResult.postValue(new ProfileSaveResult.Success());
+            } catch (Exception e) {
+                signOutResult.postValue(new ProfileSaveResult.Error(e.getMessage() != null ? e.getMessage() : "Unknown error occurred"));
+            }
+        });
     }
     
     @Override

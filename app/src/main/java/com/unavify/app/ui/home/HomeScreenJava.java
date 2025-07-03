@@ -25,6 +25,7 @@ public class HomeScreenJava extends AppCompatActivity {
         TextView comingSoonText = findViewById(R.id.coming_soon_text);
         TextView featuresText = findViewById(R.id.features_text);
         Button signOutButton = findViewById(R.id.sign_out_button);
+        Button editProfileButton = findViewById(R.id.edit_profile_button);
 
         welcomeText.setText("Welcome to Unavify! \uD83C\uDF7D\uFE0F");
         subtitleText.setText("Your Food Recipe Community");
@@ -45,6 +46,14 @@ public class HomeScreenJava extends AppCompatActivity {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
+            }
+        });
+
+        editProfileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeScreenJava.this, com.unavify.app.ui.profile.ProfileActivity.class);
+                startActivity(intent);
             }
         });
     }

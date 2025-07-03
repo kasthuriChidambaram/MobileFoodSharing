@@ -55,10 +55,19 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/edit_profile_button"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Edit Profile"
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
             android:id="@+id/sign_out_button"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Sign Out"
-            android:textSize="16sp"/>
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"/>
     </LinearLayout>
 </ScrollView> 

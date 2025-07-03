@@ -16,6 +16,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Reduce GMS warnings
+        manifestPlaceholders["usesCleartextTraffic"] = "false"
     }
 
     buildTypes {
@@ -40,6 +43,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.analytics)
+    implementation("com.google.firebase:firebase-firestore")
     
     // Android core dependencies
     implementation("androidx.appcompat:appcompat:1.6.1")
