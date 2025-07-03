@@ -13,8 +13,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import com.google.firebase.auth.FirebaseAuth;
 import com.unavify.app.R;
 import dagger.hilt.android.AndroidEntryPoint;
+import android.util.Log;
 
 @AndroidEntryPoint
 public class LoginScreenJava extends AppCompatActivity {
@@ -39,6 +41,16 @@ public class LoginScreenJava extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("LoginScreenJava", "onCreate: user=" + FirebaseAuth.getInstance().getCurrentUser());
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Log.d("LoginScreenJava", "User is logged in, redirecting to ProfileActivity");
+            startActivity(new Intent(this, com.unavify.app.ui.profile.ProfileActivity.class));
+            finish();
+            return;
+        }
+
+        Log.d("LoginScreenJava", "User is NOT logged in, showing login UI");
         setContentView(R.layout.activity_login);
         
         // Initialize ViewModel
@@ -205,7 +217,9 @@ public class LoginScreenJava extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Clear any errors when leaving the screen
-        authViewModel.clearError();
+        // Only clear error if authViewModel is initialized
+        if (authViewModel != null) {
+            authViewModel.clearError();
+        }
     }
 } 

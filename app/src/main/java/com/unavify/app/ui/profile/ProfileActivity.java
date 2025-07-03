@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.unavify.app.R;
 import com.unavify.app.ui.home.HomeScreenJava;
 import dagger.hilt.android.AndroidEntryPoint;
+import android.util.Log;
 
 @AndroidEntryPoint
 public class ProfileActivity extends AppCompatActivity {
@@ -27,6 +28,7 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("ProfileActivity", "onCreate");
         setContentView(R.layout.activity_profile);
         
         // Initialize ViewModel
