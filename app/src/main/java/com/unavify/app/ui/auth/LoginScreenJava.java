@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.unavify.app.R;
+import com.unavify.app.SplashActivity;
 import dagger.hilt.android.AndroidEntryPoint;
 import android.util.Log;
 
@@ -44,8 +45,8 @@ public class LoginScreenJava extends AppCompatActivity {
         Log.d("LoginScreenJava", "onCreate: user=" + FirebaseAuth.getInstance().getCurrentUser());
 
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            Log.d("LoginScreenJava", "User is logged in, redirecting to ProfileActivity");
-            startActivity(new Intent(this, com.unavify.app.ui.profile.ProfileActivity.class));
+            Log.d("LoginScreenJava", "User is logged in, redirecting to SplashActivity");
+            startActivity(new Intent(this, SplashActivity.class));
             finish();
             return;
         }
@@ -209,7 +210,7 @@ public class LoginScreenJava extends AppCompatActivity {
     
     private void onLoginSuccess() {
         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, com.unavify.app.ui.profile.ProfileActivity.class);
+        Intent intent = new Intent(this, SplashActivity.class);
         startActivity(intent);
         finish();
     }

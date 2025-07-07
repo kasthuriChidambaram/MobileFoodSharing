@@ -57,31 +57,16 @@ public class ProfileViewModelJava extends ViewModel {
     }
     
     public void checkProfileExists() {
-        executorService.execute(() -> {
-            try {
-                Object profile = repository.getCurrentUserProfile();
-                boolean exists = profile != null;
-                profileExists.postValue(exists);
-            } catch (Exception e) {
-                profileExists.postValue(false);
-            }
-        });
+        repository.isProfileComplete(isComplete -> profileExists.postValue(isComplete));
     }
     
     public void checkUsernameUnique(String username) {
         usernameCheck.setValue(new UsernameCheckState.Loading());
-        
-        executorService.execute(() -> {
-            try {
-                boolean isUnique = repository.isUsernameUnique(username);
-                
-                if (isUnique) {
-                    usernameCheck.postValue(new UsernameCheckState.Available());
-                } else {
-                    usernameCheck.postValue(new UsernameCheckState.Taken("Username already taken"));
-                }
-            } catch (Exception e) {
-                usernameCheck.postValue(new UsernameCheckState.Error("Failed to check username"));
+        repository.isUsernameUnique(username, isUnique -> {
+            if (isUnique) {
+                usernameCheck.postValue(new UsernameCheckState.Available());
+            } else {
+                usernameCheck.postValue(new UsernameCheckState.Taken("Username already taken"));
             }
         });
     }
@@ -89,17 +74,14 @@ public class ProfileViewModelJava extends ViewModel {
     public void saveProfile(String username, Uri profileImageUri) {
         saveResult.setValue(new ProfileSaveResult.Loading());
         
-        executorService.execute(() -> {
-            try {
-                boolean success = repository.saveProfile(username, profileImageUri);
-                
-                if (success) {
-                    saveResult.postValue(new ProfileSaveResult.Success());
-                } else {
-                    saveResult.postValue(new ProfileSaveResult.Error("Failed to save profile"));
-                }
-            } catch (Exception e) {
-                saveResult.postValue(new ProfileSaveResult.Error(e.getMessage() != null ? e.getMessage() : "Unknown error occurred"));
+        repository.saveProfile(username, profileImageUri, new UserProfileRepository.SaveProfileCallback() {
+            @Override
+            public void onSuccess() {
+                saveResult.postValue(new ProfileSaveResult.Success());
+            }
+            @Override
+            public void onFailure(String errorMessage) {
+                saveResult.postValue(new ProfileSaveResult.Error(errorMessage));
             }
         });
     }
@@ -113,39 +95,31 @@ public class ProfileViewModelJava extends ViewModel {
     }
     
     public void loadUserProfile() {
-        executorService.execute(() -> {
-            try {
-                // Get current user from Firebase Auth
-                String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
-                    FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
-                
-                if (userId != null) {
-                    String phoneNumber = FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber();
-                    
-                    // Try to get profile from repository
-                    Object profile = repository.getCurrentUserProfile();
-                    
-                    if (profile != null) {
-                        // Convert to UserProfile if needed
-                        UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
-                        this.userProfile.postValue(userProfile);
-                    } else {
-                        // Create basic profile with available info
-                        UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
-                        this.userProfile.postValue(userProfile);
-                    }
+        String phoneNumber = FirebaseAuth.getInstance().getCurrentUser() != null ?
+            FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : null;
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null ?
+            FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        if (phoneNumber == null || userId == null) {
+            userProfile.postValue(null);
+            return;
+        }
+        // Fetch user profile from Firestore
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(phoneNumber)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String username = documentSnapshot.getString("username");
+                    String profileImageUrl = documentSnapshot.getString("profileImageUrl");
+                    String phone = documentSnapshot.getId();
+                    UserProfile profile = new UserProfile(userId, username, phone, null, profileImageUrl);
+                    userProfile.postValue(profile);
+                } else {
+                    userProfile.postValue(null);
                 }
-            } catch (Exception e) {
-                // Handle error - create basic profile
-                String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
-                    FirebaseAuth.getInstance().getCurrentUser().getUid() : "unknown";
-                String phoneNumber = FirebaseAuth.getInstance().getCurrentUser() != null ? 
-                    FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : "unknown";
-                
-                UserProfile userProfile = new UserProfile(userId, "User", phoneNumber);
-                this.userProfile.postValue(userProfile);
-            }
-        });
+            })
+            .addOnFailureListener(e -> userProfile.postValue(null));
     }
     
     public void signOut() {

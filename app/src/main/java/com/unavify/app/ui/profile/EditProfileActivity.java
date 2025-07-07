@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import com.bumptech.glide.Glide;
 import com.unavify.app.R;
 import com.unavify.app.ui.home.HomeScreenJava;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -48,7 +49,14 @@ public class EditProfileActivity extends AppCompatActivity {
         if (currentUsername != null) {
             usernameEditText.setText(currentUsername);
         }
-        // TODO: Load currentImageUrl into profileImageView if not null
+        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
+            Glide.with(this)
+                .load(currentImageUrl)
+                .placeholder(R.drawable.ic_launcher_foreground)
+                .error(R.drawable.ic_launcher_foreground)
+                .circleCrop()
+                .into(profileImageView);
+        }
 
         selectImageButton.setOnClickListener(v -> openImagePicker());
         saveButton.setOnClickListener(v -> saveProfile());
