@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -43,11 +44,55 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 .circleCrop()
                 .into(holder.userImage);
         Glide.with(context)
+                .asBitmap()
                 .load(post.mediaUrl)
                 .placeholder(R.drawable.ic_launcher_foreground)
                 .error(R.drawable.ic_launcher_foreground)
-                .centerCrop()
-                .into(holder.postImage);
+                .fitCenter()
+                .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull android.graphics.Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.Bitmap> transition) {
+                        int width = resource.getWidth();
+                        int height = resource.getHeight();
+                        float aspectRatio = (float) width / height;
+                        String type;
+                        if (Math.abs(aspectRatio - 1.0f) < 0.01f) {
+                            type = "square";
+                        } else if (aspectRatio < 1.0f && aspectRatio >= 0.8f) {
+                            type = "portrait";
+                        } else if (aspectRatio > 1.0f && aspectRatio <= 1.91f) {
+                            type = "landscape";
+                        } else {
+                            type = "other";
+                        }
+                        android.util.Log.d("FEED_DEBUG", "Image aspectRatio=" + aspectRatio + ", classified as " + type);
+                        int maxWidth = holder.postImage.getWidth();
+                        if (maxWidth == 0) {
+                            holder.postImage.post(() -> {
+                                int realWidth = holder.postImage.getWidth();
+                                if (realWidth > 0) {
+                                    int newHeight = (int) (realWidth / aspectRatio);
+                                    android.view.ViewGroup.LayoutParams params = holder.postImage.getLayoutParams();
+                                    params.height = newHeight;
+                                    holder.postImage.setLayoutParams(params);
+                                    holder.postImage.setImageBitmap(resource);
+                                } else {
+                                    holder.postImage.setImageBitmap(resource);
+                                }
+                            });
+                        } else {
+                            int newHeight = (int) (maxWidth / aspectRatio);
+                            android.view.ViewGroup.LayoutParams params = holder.postImage.getLayoutParams();
+                            params.height = newHeight;
+                            holder.postImage.setLayoutParams(params);
+                            holder.postImage.setImageBitmap(resource);
+                        }
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {
+                        holder.postImage.setImageDrawable(placeholder);
+                    }
+                });
         holder.commentsButton.setOnClickListener(v ->
                 Toast.makeText(context, "Comments feature coming soon!", Toast.LENGTH_SHORT).show()
         );
