@@ -50,6 +50,7 @@
         <activity android:name=".ui.home.HomeScreenJava" />
         <activity android:name=".ui.test.FirestoreTestActivity" />
         <activity android:name=".ui.profile.AddPostActivity" />
+        <activity android:name=".ui.home.CommentActivity" />
         
         <provider
             android:name="androidx.core.content.FileProvider"

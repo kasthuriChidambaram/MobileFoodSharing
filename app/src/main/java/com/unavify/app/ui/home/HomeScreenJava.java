@@ -71,7 +71,7 @@ public class HomeScreenJava extends AppCompatActivity {
 
         fabAddPost.setOnClickListener(v -> {
             Intent intent = new Intent(this, AddPostActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, ADD_POST_REQUEST_CODE);
         });
 
         fabEditProfile.setOnClickListener(v -> {
@@ -88,6 +88,32 @@ public class HomeScreenJava extends AppCompatActivity {
 
         // Load posts
         loadPosts();
+    }
+
+    private static final int ADD_POST_REQUEST_CODE = 1001;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        Log.d("FEED_DEBUG", "onActivityResult called: requestCode=" + requestCode + ", resultCode=" + resultCode);
+        
+        if (requestCode == ADD_POST_REQUEST_CODE && resultCode == RESULT_OK) {
+            Log.d("FEED_DEBUG", "AddPostActivity returned with RESULT_OK");
+            if (data != null) {
+                boolean postUploaded = data.getBooleanExtra("post_uploaded", false);
+                Log.d("FEED_DEBUG", "post_uploaded extra: " + postUploaded);
+                if (postUploaded) {
+                    // Post was uploaded successfully, refresh the feed
+                    Log.d("FEED_DEBUG", "Post uploaded successfully, refreshing feed");
+                    loadPosts();
+                }
+            } else {
+                Log.d("FEED_DEBUG", "data is null");
+            }
+        } else {
+            Log.d("FEED_DEBUG", "Not the right request code or result code");
+        }
     }
 
     private void loadUserProfile() {

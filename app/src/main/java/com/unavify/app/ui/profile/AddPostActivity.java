@@ -576,6 +576,12 @@ public class AddPostActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
                     String message = isVideo ? "Video uploaded successfully!" : "Image uploaded successfully!";
                     Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                    
+                    // Set result to indicate successful post upload
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("post_uploaded", true);
+                    setResult(RESULT_OK, resultIntent);
+                    Log.d("AddPostActivity", "Setting result: post_uploaded=true, RESULT_OK");
                     finish();
                 })
                 .addOnFailureListener(e -> {

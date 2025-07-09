@@ -94,9 +94,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                         holder.postImage.setImageDrawable(placeholder);
                     }
                 });
-        holder.commentsButton.setOnClickListener(v ->
-                Toast.makeText(context, "Comments feature coming soon!", Toast.LENGTH_SHORT).show()
-        );
+        holder.commentsButton.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(context, CommentActivity.class);
+            intent.putExtra("postId", post.postId);
+            context.startActivity(intent);
+        });
     }
 
     @Override
