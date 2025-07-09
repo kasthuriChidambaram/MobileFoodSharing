@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -108,7 +109,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         ShapeableImageView postImage;
         TextView usernameText;
         TextView captionText;
-        Button commentsButton;
+        android.widget.ImageButton commentsButton;
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             userImage = itemView.findViewById(R.id.image_user_profile);
