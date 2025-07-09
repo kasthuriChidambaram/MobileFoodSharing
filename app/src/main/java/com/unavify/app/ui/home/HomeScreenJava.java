@@ -91,6 +91,7 @@ public class HomeScreenJava extends AppCompatActivity {
     }
 
     private static final int ADD_POST_REQUEST_CODE = 1001;
+    private static final int COMMENT_REQUEST_CODE = 1002;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -111,6 +112,9 @@ public class HomeScreenJava extends AppCompatActivity {
             } else {
                 Log.d("FEED_DEBUG", "data is null");
             }
+        } else if (requestCode == COMMENT_REQUEST_CODE && resultCode == RESULT_OK) {
+            Log.d("FEED_DEBUG", "CommentActivity returned with RESULT_OK, refreshing feed");
+            loadPosts(); // Refresh feed to update comment counts
         } else {
             Log.d("FEED_DEBUG", "Not the right request code or result code");
         }
@@ -191,20 +195,66 @@ public class HomeScreenJava extends AppCompatActivity {
                                 String username = userDoc.getString("username");
                                 String userProfileImageUrl = userDoc.getString("profileImageUrl");
                                 Log.d("FEED_DEBUG", "Fetched user info for phone=" + phone + ": username=" + username + ", profileImageUrl=" + userProfileImageUrl);
-                                postList.add(new Post(postId, userId, username, userProfileImageUrl, caption, isPublic, taggedUserPhones, mediaUrl));
-                                postAdapter.notifyDataSetChanged();
-                                Log.d("FEED_DEBUG", "Adapter notified after adding post with user info: postId=" + postId);
+                                
+                                // Fetch comment count for this post
+                                Log.d("FEED_DEBUG", "About to fetch comments for postId: " + postId + " with caption: " + caption);
+                                FirebaseFirestore.getInstance()
+                                    .collection("posts")
+                                    .document(postId)
+                                    .collection("comments")
+                                    .get()
+                                    .addOnSuccessListener(commentsSnapshot -> {
+                                        int commentCount = commentsSnapshot.size();
+                                        Log.d("FEED_DEBUG", "Comment count for post " + postId + " (caption: " + caption + "): " + commentCount);
+                                        postList.add(new Post(postId, userId, username, userProfileImageUrl, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
+                                        postAdapter.notifyDataSetChanged();
+                                        Log.d("FEED_DEBUG", "Adapter notified after adding post with user info and comment count: postId=" + postId + ", commentCount=" + commentCount);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("FEED_DEBUG", "Failed to fetch comment count for post " + postId, e);
+                                        postList.add(new Post(postId, userId, username, userProfileImageUrl, caption, isPublic, taggedUserPhones, mediaUrl, 0));
+                                        postAdapter.notifyDataSetChanged();
+                                        Log.d("FEED_DEBUG", "Adapter notified after adding post with user info and default comment count: postId=" + postId);
+                                    });
                             })
                             .addOnFailureListener(e -> {
                                 Log.e("FEED_DEBUG", "Failed to fetch user info for phone=" + phone, e);
-                                postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl));
-                                postAdapter.notifyDataSetChanged();
-                                Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info: postId=" + postId);
+                                // Fetch comment count even for default user info
+                                FirebaseFirestore.getInstance()
+                                    .collection("posts")
+                                    .document(postId)
+                                    .collection("comments")
+                                    .get()
+                                    .addOnSuccessListener(commentsSnapshot -> {
+                                        int commentCount = commentsSnapshot.size();
+                                        postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
+                                        postAdapter.notifyDataSetChanged();
+                                        Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info and comment count: postId=" + postId);
+                                    })
+                                    .addOnFailureListener(commentError -> {
+                                        postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
+                                        postAdapter.notifyDataSetChanged();
+                                        Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info and default comment count: postId=" + postId);
+                                    });
                             });
                     } else {
-                        postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl));
-                        postAdapter.notifyDataSetChanged();
-                        Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone: postId=" + postId);
+                        // Fetch comment count for posts with no phone
+                        FirebaseFirestore.getInstance()
+                            .collection("posts")
+                            .document(postId)
+                            .collection("comments")
+                            .get()
+                            .addOnSuccessListener(commentsSnapshot -> {
+                                int commentCount = commentsSnapshot.size();
+                                postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
+                                postAdapter.notifyDataSetChanged();
+                                Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and comment count: postId=" + postId);
+                            })
+                            .addOnFailureListener(e -> {
+                                postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
+                                postAdapter.notifyDataSetChanged();
+                                Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and default comment count: postId=" + postId);
+                            });
                     }
                 }
             })

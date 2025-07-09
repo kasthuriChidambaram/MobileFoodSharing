@@ -38,6 +38,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         android.util.Log.d("FEED_DEBUG", "onBindViewHolder: position=" + position + ", caption=" + post.caption + ", username=" + post.username);
         holder.usernameText.setText(post.username != null ? post.username : "User");
         holder.captionText.setText(post.caption);
+        
+        // Set comment count - show only number if comments exist
+        android.util.Log.d("FEED_DEBUG", "Setting comment count for post " + post.postId + " (caption: " + post.caption + "): " + post.commentCount);
+        if (post.commentCount > 0) {
+            holder.commentCountText.setText(String.valueOf(post.commentCount));
+            holder.commentCountText.setVisibility(View.VISIBLE);
+            android.util.Log.d("FEED_DEBUG", "Showing comment count: " + post.commentCount + " for post: " + post.postId);
+        } else {
+            holder.commentCountText.setVisibility(View.GONE);
+            android.util.Log.d("FEED_DEBUG", "Hiding comment count for post: " + post.postId);
+        }
         Glide.with(context)
                 .load(post.userProfileImageUrl)
                 .placeholder(R.drawable.ic_launcher_foreground)
@@ -97,7 +108,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.commentsButton.setOnClickListener(v -> {
             android.content.Intent intent = new android.content.Intent(context, CommentActivity.class);
             intent.putExtra("postId", post.postId);
-            context.startActivity(intent);
+            if (context instanceof android.app.Activity) {
+                ((android.app.Activity) context).startActivityForResult(intent, 1002);
+            } else {
+                context.startActivity(intent);
+            }
         });
     }
 
@@ -111,6 +126,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         ShapeableImageView postImage;
         TextView usernameText;
         TextView captionText;
+        TextView commentCountText;
         android.widget.ImageButton commentsButton;
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -118,6 +134,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             postImage = itemView.findViewById(R.id.image_post);
             usernameText = itemView.findViewById(R.id.text_username);
             captionText = itemView.findViewById(R.id.text_caption);
+            commentCountText = itemView.findViewById(R.id.text_comment_count);
             commentsButton = itemView.findViewById(R.id.button_comments);
         }
     }

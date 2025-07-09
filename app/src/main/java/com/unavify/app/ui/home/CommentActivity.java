@@ -127,6 +127,9 @@ public class CommentActivity extends AppCompatActivity {
                             sendButton.setEnabled(true);
                             loadComments(); // Refresh comments
                             Toast.makeText(this, "Comment added!", Toast.LENGTH_SHORT).show();
+                            
+                            // Set result to indicate comment was added
+                            setResult(RESULT_OK);
                         })
                         .addOnFailureListener(e -> {
                             Toast.makeText(this, "Failed to send comment", Toast.LENGTH_SHORT).show();
