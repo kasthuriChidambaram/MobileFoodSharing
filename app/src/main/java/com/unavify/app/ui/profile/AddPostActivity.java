@@ -180,12 +180,14 @@ public class AddPostActivity extends AppCompatActivity {
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show();
+                showMediaPickerDialog(); // Show picker again after permission granted
             } else {
                 Toast.makeText(this, "Camera permission is required to take photos/videos", Toast.LENGTH_LONG).show();
             }
         } else if (requestCode == STORAGE_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
+                showMediaPickerDialog(); // Show picker again after permission granted
             } else {
                 Toast.makeText(this, "Storage permission is required to select media", Toast.LENGTH_LONG).show();
             }
