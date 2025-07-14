@@ -99,9 +99,9 @@ public class AddPostActivity extends AppCompatActivity {
     }
 
     private void showMediaPickerDialog() {
-        String[] options = {"Take Photo", "Select Photo from Gallery", "Take Video", "Select Video from Gallery"};
+        String[] options = {"Take Photo", "Select Photo from Gallery"};
         new AlertDialog.Builder(this)
-                .setTitle("Capture or Select Media")
+                .setTitle("Capture or Select Photo")
                 .setItems(options, (dialog, which) -> {
                     switch (which) {
                         case 0: // Take Photo
@@ -112,22 +112,6 @@ public class AddPostActivity extends AppCompatActivity {
                         case 1: // Select Photo
                             if (checkStoragePermission()) {
                                 pickPhotoLauncher.launch("image/*");
-                            }
-                            break;
-                        case 2: // Take Video
-                            if (checkCameraPermission()) {
-                                Uri videoUri = createVideoUri();
-                                if (videoUri != null) {
-                                    selectedMediaUri = videoUri;
-                                    takeVideoLauncher.launch(videoUri);
-                                } else {
-                                    Toast.makeText(this, "Failed to create video file", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                            break;
-                        case 3: // Select Video
-                            if (checkStoragePermission()) {
-                                pickVideoLauncher.launch("video/*");
                             }
                             break;
                     }

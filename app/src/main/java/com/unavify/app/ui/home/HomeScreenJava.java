@@ -24,61 +24,68 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import com.google.firebase.firestore.Query;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import android.widget.ImageButton;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.annotation.NonNull;
+import android.view.MenuItem;
 
 @AndroidEntryPoint
 public class HomeScreenJava extends AppCompatActivity {
     private AuthViewModelJava viewModel;
-    private ShapeableImageView profileImageView;
-    private TextView welcomeText;
-    private TextView subtitleText;
     private String currentUsername = null;
     private String currentProfileImageUrl = null;
     private RecyclerView recyclerViewPosts;
     private PostAdapter postAdapter;
     private List<Post> postList = new ArrayList<>();
+    private RecyclerView recyclerViewUsers;
+    private UserAdapter userAdapter;
+    private List<User> userList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        Log.d("FEED_DEBUG", "onCreate: HomeScreenJava started");
-        welcomeText = findViewById(R.id.welcome_text);
-        subtitleText = findViewById(R.id.subtitle_text);
-        Button signOutButton = findViewById(R.id.sign_out_button);
-        com.google.android.material.floatingactionbutton.FloatingActionButton fabAddPost = findViewById(R.id.fab_add_post);
-        com.google.android.material.floatingactionbutton.FloatingActionButton fabEditProfile = findViewById(R.id.fab_edit_profile);
-        profileImageView = findViewById(R.id.profile_image);
+        loadCurrentUserProfile();
 
-        subtitleText.setText("Your Food Recipe Community");
+        Log.d("FEED_DEBUG", "onCreate: HomeScreenJava started");
+        // Removed: ImageButton btnAddPost = findViewById(R.id.btn_add_post);
+        // Removed: ImageButton btnEditProfile = findViewById(R.id.btn_edit_profile);
+        // Removed: ImageButton btnSignOut = findViewById(R.id.btn_sign_out);
 
         // Get the ViewModel using Hilt's ViewModelProvider
         viewModel = new ViewModelProvider(this).get(AuthViewModelJava.class);
 
-        // Load user profile data
-        loadUserProfile();
-
-        signOutButton.setOnClickListener(new View.OnClickListener() {
+        // Setup BottomNavigationView
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
             @Override
-            public void onClick(View v) {
-                viewModel.signOut();
-                Intent intent = new Intent(HomeScreenJava.this, com.unavify.app.ui.auth.LoginScreenJava.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int id = item.getItemId();
+                if (id == R.id.nav_home) {
+                    // Already on home, do nothing
+                    return true;
+                } else if (id == R.id.nav_add_post) {
+                    Intent addPostIntent = new Intent(HomeScreenJava.this, AddPostActivity.class);
+                    startActivityForResult(addPostIntent, ADD_POST_REQUEST_CODE);
+                    return true;
+                } else if (id == R.id.nav_profile) {
+                    Intent editProfileIntent = new Intent(HomeScreenJava.this, EditProfileActivity.class);
+                    if (currentUsername != null) editProfileIntent.putExtra("username", currentUsername);
+                    if (currentProfileImageUrl != null) editProfileIntent.putExtra("profileImageUrl", currentProfileImageUrl);
+                    startActivity(editProfileIntent);
+                    return true;
+                } else if (id == R.id.nav_sign_out) {
+                    viewModel.signOut();
+                    Intent signOutIntent = new Intent(HomeScreenJava.this, com.unavify.app.ui.auth.LoginScreenJava.class);
+                    signOutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(signOutIntent);
+                    finish();
+                    return true;
+                }
+                return false;
             }
-        });
-
-        fabAddPost.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AddPostActivity.class);
-            startActivityForResult(intent, ADD_POST_REQUEST_CODE);
-        });
-
-        fabEditProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EditProfileActivity.class);
-            if (currentUsername != null) intent.putExtra("username", currentUsername);
-            if (currentProfileImageUrl != null) intent.putExtra("profileImageUrl", currentProfileImageUrl);
-            startActivity(intent);
         });
 
         recyclerViewPosts = findViewById(R.id.recycler_view_posts);
@@ -86,8 +93,29 @@ public class HomeScreenJava extends AppCompatActivity {
         postAdapter = new PostAdapter(this, postList);
         recyclerViewPosts.setAdapter(postAdapter);
 
-        // Load posts
+        // Setup users RecyclerView
+        recyclerViewUsers = findViewById(R.id.recycler_view_users);
+        recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        userAdapter = new UserAdapter(this, userList);
+        recyclerViewUsers.setAdapter(userAdapter);
+
+        // Load posts and users
         loadPosts();
+        loadCommunityMembers();
+    }
+
+    private void loadCurrentUserProfile() {
+        String phone = FirebaseAuth.getInstance().getCurrentUser() != null ?
+            FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : null;
+        if (phone == null) return;
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(phone)
+            .get()
+            .addOnSuccessListener(userDoc -> {
+                currentUsername = userDoc.getString("username");
+                currentProfileImageUrl = userDoc.getString("profileImageUrl");
+            });
     }
 
     private static final int ADD_POST_REQUEST_CODE = 1001;
@@ -108,59 +136,15 @@ public class HomeScreenJava extends AppCompatActivity {
                     // Post was uploaded successfully, refresh the feed
                     Log.d("FEED_DEBUG", "Post uploaded successfully, refreshing feed");
                     loadPosts();
-                }
-            } else {
+                        }
+                    } else {
                 Log.d("FEED_DEBUG", "data is null");
-            }
+                    }
         } else if (requestCode == COMMENT_REQUEST_CODE && resultCode == RESULT_OK) {
             Log.d("FEED_DEBUG", "CommentActivity returned with RESULT_OK, refreshing feed");
             loadPosts(); // Refresh feed to update comment counts
         } else {
             Log.d("FEED_DEBUG", "Not the right request code or result code");
-        }
-    }
-
-    private void loadUserProfile() {
-        String phoneNumber = FirebaseAuth.getInstance().getCurrentUser() != null ?
-            FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : null;
-        
-        if (phoneNumber != null) {
-            FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(phoneNumber)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String username = documentSnapshot.getString("username");
-                        String profileImageUrl = documentSnapshot.getString("profileImageUrl");
-                        this.currentUsername = username;
-                        this.currentProfileImageUrl = profileImageUrl;
-                        
-                        // Update welcome text
-                        if (username != null && !username.isEmpty()) {
-                            welcomeText.setText("Welcome, " + username + "! \uD83C\uDF7D\uFE0F");
-                        } else {
-                            welcomeText.setText("Welcome to Unavify! \uD83C\uDF7D\uFE0F");
-                        }
-                        
-                        // Load profile image
-                        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                            Glide.with(this)
-                                .load(profileImageUrl)
-                                .placeholder(R.drawable.ic_launcher_foreground)
-                                .error(R.drawable.ic_launcher_foreground)
-                                .circleCrop()
-                                .into(profileImageView);
-                        }
-                    } else {
-                        welcomeText.setText("Welcome to Unavify! \uD83C\uDF7D\uFE0F");
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    welcomeText.setText("Welcome to Unavify! \uD83C\uDF7D\uFE0F");
-                });
-        } else {
-            welcomeText.setText("Welcome to Unavify! \uD83C\uDF7D\uFE0F");
         }
     }
 
@@ -233,7 +217,7 @@ public class HomeScreenJava extends AppCompatActivity {
                                     })
                                     .addOnFailureListener(commentError -> {
                                         postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
-                                        postAdapter.notifyDataSetChanged();
+                                postAdapter.notifyDataSetChanged();
                                         Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info and default comment count: postId=" + postId);
                                     });
                             });
@@ -252,7 +236,7 @@ public class HomeScreenJava extends AppCompatActivity {
                             })
                             .addOnFailureListener(e -> {
                                 postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
-                                postAdapter.notifyDataSetChanged();
+                        postAdapter.notifyDataSetChanged();
                                 Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and default comment count: postId=" + postId);
                             });
                     }
@@ -260,6 +244,33 @@ public class HomeScreenJava extends AppCompatActivity {
             })
             .addOnFailureListener(e -> {
                 Log.e("FEED_DEBUG", "Failed to fetch posts from Firestore", e);
+            });
+    }
+
+    private void loadCommunityMembers() {
+        Log.d("FEED_DEBUG", "loadCommunityMembers: Fetching users from Firestore");
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .get()
+            .addOnSuccessListener(querySnapshot -> {
+                userList.clear();
+                int fetchedCount = querySnapshot.getDocuments().size();
+                Log.d("FEED_DEBUG", "Fetched users: " + fetchedCount);
+                
+                for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                    String phone = doc.getId();
+                    String username = doc.getString("username");
+                    String profileImageUrl = doc.getString("profileImageUrl");
+                    
+                    Log.d("FEED_DEBUG", "Processing user: phone=" + phone + ", username=" + username);
+                    userList.add(new User(phone, username, profileImageUrl));
+                }
+                
+                userAdapter.notifyDataSetChanged();
+                Log.d("FEED_DEBUG", "User adapter notified, total users: " + userList.size());
+            })
+            .addOnFailureListener(e -> {
+                Log.e("FEED_DEBUG", "Failed to fetch users from Firestore", e);
             });
     }
 } 

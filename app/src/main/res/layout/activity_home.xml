@@ -3,101 +3,64 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:orientation="vertical">
 
-    <!-- Profile Header Section -->
+    <!-- Main Content Area -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="24dp"
-        android:padding="8dp">
-
-        <!-- Circular Profile Image -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/profile_image"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_marginEnd="16dp"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray"
-            app:shapeAppearanceOverlay="@style/CircularImageView"
-            android:contentDescription="Profile Image" />
-
-        <!-- Welcome Text Section -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/welcome_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:gravity="start"
-                android:layout_marginBottom="4dp"/>
-
-            <TextView
-                android:id="@+id/subtitle_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
-                android:gravity="start"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <!-- RecyclerView for posts -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_posts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:overScrollMode="never"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"/>
-
-    <Button
-        android:id="@+id/sign_out_button"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="Sign Out"
-        android:textSize="16sp"
-        android:layout_marginBottom="16dp"/>
-
-    <!-- Floating Action Buttons on the left side -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start|center_vertical"
         android:orientation="vertical"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp">
+        android:padding="0dp">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_add_post"
-            android:layout_width="wrap_content"
+        <!-- Community Members Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:layout_marginBottom="16dp"
-            android:src="@android:drawable/ic_input_add"
-            android:contentDescription="Add Post" />
+            android:paddingTop="24dp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_edit_profile"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_edit"
-            android:contentDescription="Edit Profile" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Community Members"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view_users"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:orientation="horizontal"
+                android:overScrollMode="never"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"/>
+
+        </LinearLayout>
+
+        <!-- RecyclerView for posts (no card, edge-to-edge) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_posts"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:overScrollMode="never"
+            android:clipToPadding="false"
+            android:paddingBottom="0dp"/>
 
     </LinearLayout>
+
+    <!-- Bottom Navigation for Editor Section -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_navigation_menu" />
 
 </LinearLayout> 

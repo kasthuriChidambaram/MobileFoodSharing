@@ -49,19 +49,27 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.commentCountText.setVisibility(View.GONE);
             android.util.Log.d("FEED_DEBUG", "Hiding comment count for post: " + post.postId);
         }
+        // Load user profile image with null check
+        if (post.userProfileImageUrl != null && !post.userProfileImageUrl.isEmpty()) {
         Glide.with(context)
                 .load(post.userProfileImageUrl)
                 .placeholder(R.drawable.ic_launcher_foreground)
                 .error(R.drawable.ic_launcher_foreground)
                 .circleCrop()
                 .into(holder.userImage);
-        Glide.with(context)
-                .asBitmap()
-                .load(post.mediaUrl)
-                .placeholder(R.drawable.ic_launcher_foreground)
-                .error(R.drawable.ic_launcher_foreground)
-                .fitCenter()
-                .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.Bitmap>() {
+        } else {
+            // Set default placeholder for null/empty profile image
+            holder.userImage.setImageResource(R.drawable.ic_launcher_foreground);
+        }
+        // Load post media with null check
+        if (post.mediaUrl != null && !post.mediaUrl.isEmpty()) {
+            Glide.with(context)
+                    .asBitmap()
+                    .load(post.mediaUrl)
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .error(R.drawable.ic_launcher_foreground)
+                    .fitCenter()
+                    .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull android.graphics.Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.Bitmap> transition) {
                         int width = resource.getWidth();
@@ -105,6 +113,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                         holder.postImage.setImageDrawable(placeholder);
                     }
                 });
+        } else {
+            // Set default placeholder for null/empty media URL
+            holder.postImage.setImageResource(R.drawable.ic_launcher_foreground);
+        }
+        
         holder.commentsButton.setOnClickListener(v -> {
             android.content.Intent intent = new android.content.Intent(context, CommentActivity.class);
             intent.putExtra("postId", post.postId);
