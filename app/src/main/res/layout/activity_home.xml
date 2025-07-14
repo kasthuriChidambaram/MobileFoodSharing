@@ -5,6 +5,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- App Name at the Top -->
+    <TextView
+        android:id="@+id/text_app_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Unavify"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="24dp"
+        android:paddingBottom="8dp"/>
+
     <!-- Main Content Area -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,7 +32,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="16dp"
-            android:paddingTop="24dp"
             android:paddingLeft="24dp"
             android:paddingRight="24dp">
 
@@ -35,12 +47,14 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_view_users"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
+                android:layout_height="100dp"
                 android:orientation="horizontal"
                 android:overScrollMode="never"
                 android:clipToPadding="false"
                 android:paddingStart="8dp"
-                android:paddingEnd="8dp"/>
+                android:paddingEnd="8dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"/>
 
         </LinearLayout>
 
