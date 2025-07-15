@@ -1,6 +1,7 @@
 package com.unavify.app.ui.home;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = users.get(position);
+        Log.d("USER_ADAPTER", "Binding username: " + user.username);
         
         holder.usernameText.setText(user.username != null ? user.username : "User");
         
