@@ -259,6 +259,9 @@ public class HomeScreenJava extends AppCompatActivity {
 
     private void loadCommunityMembers() {
         Log.d("FEED_DEBUG", "loadCommunityMembers: Fetching users from Firestore");
+        String currentUserPhone = FirebaseAuth.getInstance().getCurrentUser() != null ?
+            FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : null;
+            
         FirebaseFirestore.getInstance()
             .collection("users")
             .get()
@@ -267,17 +270,39 @@ public class HomeScreenJava extends AppCompatActivity {
                 int fetchedCount = querySnapshot.getDocuments().size();
                 Log.d("FEED_DEBUG", "Fetched users: " + fetchedCount);
                 
+                // Separate current user and other users
+                User currentUser = null;
+                List<User> otherUsers = new ArrayList<>();
+                
                 for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
                     String phone = doc.getId();
                     String username = doc.getString("username");
                     String profileImageUrl = doc.getString("profileImageUrl");
                     
                     Log.d("FEED_DEBUG", "Processing user: phone=" + phone + ", username=" + username);
-                    userList.add(new User(phone, username, profileImageUrl));
+                    
+                    User user = new User(phone, username, profileImageUrl);
+                    
+                    // Check if this is the current user
+                    if (currentUserPhone != null && currentUserPhone.equals(phone)) {
+                        currentUser = user;
+                        Log.d("FEED_DEBUG", "Found current user: " + username);
+                    } else {
+                        otherUsers.add(user);
+                    }
                 }
                 
+                // Add current user first, then other users
+                if (currentUser != null) {
+                    userList.add(currentUser);
+                    Log.d("FEED_DEBUG", "Added current user first: " + currentUser.username);
+                }
+                
+                userList.addAll(otherUsers);
+                
                 userAdapter.notifyDataSetChanged();
-                Log.d("FEED_DEBUG", "User adapter notified, total users: " + userList.size());
+                Log.d("FEED_DEBUG", "User adapter notified, total users: " + userList.size() + 
+                      " (current user first: " + (currentUser != null ? "yes" : "no") + ")");
             })
             .addOnFailureListener(e -> {
                 Log.e("FEED_DEBUG", "Failed to fetch users from Firestore", e);
