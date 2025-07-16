@@ -29,6 +29,7 @@ import android.widget.ImageButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.annotation.NonNull;
 import android.view.MenuItem;
+import com.unavify.app.ui.home.UserProfileActivity;
 
 @AndroidEntryPoint
 public class HomeScreenJava extends AppCompatActivity {
@@ -98,6 +99,15 @@ public class HomeScreenJava extends AppCompatActivity {
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         userAdapter = new UserAdapter(this, userList);
         recyclerViewUsers.setAdapter(userAdapter);
+
+        // Set click listener for user profile circles
+        userAdapter.setOnUserClickListener(user -> {
+            Intent intent = new Intent(this, UserProfileActivity.class);
+            intent.putExtra("user_phone", user.phone);
+            intent.putExtra("username", user.username);
+            intent.putExtra("profile_image_url", user.profileImageUrl);
+            startActivity(intent);
+        });
 
         // Load posts and users
         loadPosts();

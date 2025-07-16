@@ -116,7 +116,15 @@ public class AddPostActivity extends AppCompatActivity {
                             break;
                     }
                 })
-                .setCancelable(false)
+                .setCancelable(true)
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, go back to previous screen
+                    finish();
+                })
+                .setOnCancelListener(dialog -> {
+                    // User cancelled by tapping outside, go back to previous screen
+                    finish();
+                })
                 .show();
     }
 

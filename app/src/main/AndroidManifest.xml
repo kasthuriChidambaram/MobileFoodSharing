@@ -52,6 +52,7 @@
         <activity android:name=".ui.profile.AddPostActivity" />
         <activity android:name=".ui.home.CommentActivity" 
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.home.UserProfileActivity" />
         
         <provider
             android:name="androidx.core.content.FileProvider"

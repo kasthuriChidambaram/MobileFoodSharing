@@ -1,6 +1,7 @@
 package com.unavify.app.ui.home;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,10 +17,19 @@ import java.util.List;
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
     private final List<User> users;
     private final Context context;
+    private OnUserClickListener onUserClickListener;
+
+    public interface OnUserClickListener {
+        void onUserClick(User user);
+    }
 
     public UserAdapter(Context context, List<User> users) {
         this.context = context;
         this.users = users;
+    }
+
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.onUserClickListener = listener;
     }
 
     @NonNull
@@ -33,7 +43,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = users.get(position);
         Log.d("USER_ADAPTER", "Binding username: " + user.username);
-        
         holder.usernameText.setText(user.username != null ? user.username : "User");
         
         if (user.profileImageUrl != null && !user.profileImageUrl.isEmpty()) {
@@ -46,6 +55,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         } else {
             holder.userImage.setImageResource(R.drawable.ic_launcher_foreground);
         }
+
+        // Set click listener for the entire item
+        holder.itemView.setOnClickListener(v -> {
+            if (onUserClickListener != null) {
+                onUserClickListener.onUserClick(user);
+            }
+        });
     }
 
     @Override
