@@ -53,13 +53,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         if (post.userProfileImageUrl != null && !post.userProfileImageUrl.isEmpty()) {
         Glide.with(context)
                 .load(post.userProfileImageUrl)
-                .placeholder(R.drawable.ic_launcher_foreground)
-                .error(R.drawable.ic_launcher_foreground)
+                .placeholder(R.drawable.profile_placeholder)
+                .error(R.drawable.profile_placeholder)
                 .circleCrop()
                 .into(holder.userImage);
         } else {
-            // Set default placeholder for null/empty profile image
-            holder.userImage.setImageResource(R.drawable.ic_launcher_foreground);
+            // Set gradient placeholder for null/empty profile image
+            holder.userImage.setImageResource(R.drawable.profile_placeholder);
         }
         // Load post media with null check
         if (post.mediaUrl != null && !post.mediaUrl.isEmpty()) {

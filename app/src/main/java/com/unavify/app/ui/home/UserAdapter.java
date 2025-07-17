@@ -48,12 +48,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         if (user.profileImageUrl != null && !user.profileImageUrl.isEmpty()) {
             Glide.with(context)
                     .load(user.profileImageUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_foreground)
+                    .placeholder(R.drawable.profile_placeholder)
+                    .error(R.drawable.profile_placeholder)
                     .circleCrop()
                     .into(holder.userImage);
         } else {
-            holder.userImage.setImageResource(R.drawable.ic_launcher_foreground);
+            // Show gradient placeholder for missing profile image
+            holder.userImage.setImageResource(R.drawable.profile_placeholder);
         }
 
         // Set click listener for the entire item

@@ -10,13 +10,15 @@
         android:id="@+id/text_app_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Unavify"
-        android:textSize="28sp"
+        android:text="Dishcussion"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
         android:gravity="center"
         android:paddingTop="24dp"
-        android:paddingBottom="8dp"/>
+        android:paddingBottom="8dp"
+        android:fontFamily="sans-serif-light"
+        android:letterSpacing="0.1"/>
 
     <!-- Main Content Area -->
     <LinearLayout
@@ -38,7 +40,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Community Members"
+                android:text="Foodieess"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/black"
