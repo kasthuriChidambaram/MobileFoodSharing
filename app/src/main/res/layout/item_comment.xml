@@ -3,31 +3,52 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:gravity="top">
+    android:padding="12dp"
+    android:gravity="top"
+    android:background="@android:color/white"
+    android:animateLayoutChanges="true">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/image_comment_user"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@drawable/profile_placeholder"
         android:scaleType="centerCrop"
-        android:background="@drawable/ic_launcher_background"
-        android:layout_marginEnd="8dp"/>
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/profile_placeholder"
+        android:elevation="2dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/text_comment_username"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Username"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginBottom="2dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/text_comment_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Username"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:id="@+id/text_comment_timestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2m ago"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray"/>
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/text_comment_body"
@@ -35,7 +56,12 @@
             android:layout_height="wrap_content"
             android:text="Comment text here"
             android:textSize="14sp"
-            android:lineSpacingExtra="2dp"/>
+            android:textColor="@android:color/black"
+            android:lineSpacingExtra="2dp"
+            android:background="@drawable/comment_bubble_background"
+            android:padding="12dp"
+            android:layout_marginEnd="8dp"
+            android:elevation="1dp"/>
 
     </LinearLayout>
 

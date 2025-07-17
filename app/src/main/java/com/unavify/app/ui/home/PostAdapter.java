@@ -121,6 +121,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.commentsButton.setOnClickListener(v -> {
             android.content.Intent intent = new android.content.Intent(context, CommentActivity.class);
             intent.putExtra("postId", post.postId);
+            intent.putExtra("postCaption", post.caption);
             if (context instanceof android.app.Activity) {
                 ((android.app.Activity) context).startActivityForResult(intent, 1002);
             } else {

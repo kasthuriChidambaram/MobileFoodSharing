@@ -19,20 +19,33 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.unavify.app.R;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 public class CommentActivity extends AppCompatActivity {
     private String postId;
+    private String postCaption;
     private RecyclerView recyclerView;
     private EditText commentEditText;
     private Button sendButton;
     private ProgressBar progressBar;
+    private TextView typingIndicator;
     private CommentAdapter adapter;
     private List<Comment> commentList = new ArrayList<>();
+    private ListenerRegistration commentsListener;
+    private ListenerRegistration typingListener;
+    private Handler typingHandler = new Handler(Looper.getMainLooper());
+    private Runnable typingRunnable;
+    private String currentUserId;
+    private String currentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,16 +53,34 @@ public class CommentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_comment);
 
         postId = getIntent().getStringExtra("postId");
+        postCaption = getIntent().getStringExtra("postCaption");
+        
         if (postId == null) {
             Toast.makeText(this, "Error: Post ID not found", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+
+        setupUI();
+        setupRealTimeListeners();
+        loadCurrentUserInfo();
+    }
+
+    private void setupUI() {
         recyclerView = findViewById(R.id.recycler_view_comments);
         commentEditText = findViewById(R.id.edit_text_comment);
         sendButton = findViewById(R.id.button_send_comment);
         progressBar = findViewById(R.id.progress_bar_comments);
+        typingIndicator = findViewById(R.id.text_typing_indicator);
+
+        // Set post caption if available
+        TextView postCaptionText = findViewById(R.id.text_post_caption);
+        if (postCaptionText != null && postCaption != null) {
+            postCaptionText.setText(postCaption);
+        }
 
         adapter = new CommentAdapter(commentList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -57,32 +88,153 @@ public class CommentActivity extends AppCompatActivity {
 
         sendButton.setOnClickListener(v -> sendComment());
 
-        loadComments();
+        // Add typing indicator
+        commentEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    updateTypingStatus(true);
+                } else {
+                    updateTypingStatus(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
-    private void loadComments() {
-        progressBar.setVisibility(View.VISIBLE);
-        FirebaseFirestore.getInstance()
+    private void setupRealTimeListeners() {
+        // Real-time comments listener
+        commentsListener = FirebaseFirestore.getInstance()
                 .collection("posts")
                 .document(postId)
                 .collection("comments")
                 .orderBy("timestamp", Query.Direction.ASCENDING)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    commentList.clear();
-                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        Comment comment = doc.toObject(Comment.class);
-                        if (comment != null) {
-                            commentList.add(comment);
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Toast.makeText(this, "Failed to load comments", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (value != null) {
+                        int previousSize = commentList.size();
+                        commentList.clear();
+                        for (QueryDocumentSnapshot doc : value) {
+                            Comment comment = doc.toObject(Comment.class);
+                            if (comment != null) {
+                                commentList.add(comment);
+                            }
+                        }
+                        
+                        // Check if new comments were added
+                        boolean hasNewComments = commentList.size() > previousSize;
+                        
+                        adapter.notifyDataSetChanged();
+                        
+                        // Scroll to bottom for new comments with animation
+                        if (commentList.size() > 0) {
+                            if (hasNewComments) {
+                                // Animate new comments
+                                recyclerView.smoothScrollToPosition(commentList.size() - 1);
+                                
+                                // Show a subtle notification for new comments
+                                if (commentList.size() > previousSize && previousSize > 0) {
+                                    Toast.makeText(this, "New comment added!", Toast.LENGTH_SHORT).show();
+                                }
+                            }
                         }
                     }
-                    adapter.notifyDataSetChanged();
-                    progressBar.setVisibility(View.GONE);
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to load comments", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 });
+
+        // Real-time typing indicator
+        typingListener = FirebaseFirestore.getInstance()
+                .collection("posts")
+                .document(postId)
+                .collection("typing")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null || value == null) return;
+
+                    List<String> typingUsers = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : value) {
+                        String userId = doc.getString("userId");
+                        String username = doc.getString("username");
+                        long timestamp = doc.getLong("timestamp");
+                        
+                        // Only show typing for users who typed in the last 5 seconds
+                        if (userId != null && !userId.equals(currentUserId) && 
+                            System.currentTimeMillis() - timestamp < 5000) {
+                            typingUsers.add(username != null ? username : "Someone");
+                        }
+                    }
+
+                    if (typingUsers.size() > 0) {
+                        String typingText = typingUsers.size() == 1 ? 
+                            typingUsers.get(0) + " is typing..." :
+                            typingUsers.get(0) + " and " + (typingUsers.size() - 1) + " others are typing...";
+                        typingIndicator.setText(typingText);
+                        typingIndicator.setVisibility(View.VISIBLE);
+                        
+                        // Add subtle animation to typing indicator
+                        typingIndicator.setAlpha(0.7f);
+                        typingIndicator.animate().alpha(1.0f).setDuration(500).start();
+                    } else {
+                        typingIndicator.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void loadCurrentUserInfo() {
+        String phone = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber() : "";
+
+        if (phone != null && !phone.isEmpty()) {
+            FirebaseFirestore.getInstance().collection("users").document(phone).get()
+                .addOnSuccessListener(userDoc -> {
+                    currentUsername = userDoc.getString("username");
+                })
+                .addOnFailureListener(e -> {
+                    currentUsername = "User";
+                });
+        } else {
+            currentUsername = "User";
+        }
+    }
+
+    private void updateTypingStatus(boolean isTyping) {
+        if (typingRunnable != null) {
+            typingHandler.removeCallbacks(typingRunnable);
+        }
+
+        if (isTyping) {
+            // Update typing status
+            Map<String, Object> typingData = new HashMap<>();
+            typingData.put("userId", currentUserId);
+            typingData.put("username", currentUsername);
+            typingData.put("timestamp", System.currentTimeMillis());
+
+            FirebaseFirestore.getInstance()
+                    .collection("posts")
+                    .document(postId)
+                    .collection("typing")
+                    .document(currentUserId)
+                    .set(typingData);
+        } else {
+            // Remove typing status after delay
+            typingRunnable = () -> {
+                FirebaseFirestore.getInstance()
+                        .collection("posts")
+                        .document(postId)
+                        .collection("typing")
+                        .document(currentUserId)
+                        .delete();
+            };
+            typingHandler.postDelayed(typingRunnable, 2000);
+        }
     }
 
     private void sendComment() {
@@ -125,7 +277,7 @@ public class CommentActivity extends AppCompatActivity {
                         .addOnSuccessListener(documentReference -> {
                             commentEditText.setText("");
                             sendButton.setEnabled(true);
-                            loadComments(); // Refresh comments
+                            updateTypingStatus(false);
                             Toast.makeText(this, "Comment added!", Toast.LENGTH_SHORT).show();
                             
                             // Set result to indicate comment was added
@@ -140,6 +292,29 @@ public class CommentActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to get user info", Toast.LENGTH_SHORT).show();
                 sendButton.setEnabled(true);
             });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (commentsListener != null) {
+            commentsListener.remove();
+        }
+        if (typingListener != null) {
+            typingListener.remove();
+        }
+        if (typingRunnable != null) {
+            typingHandler.removeCallbacks(typingRunnable);
+        }
+        // Remove typing status when leaving
+        if (currentUserId != null) {
+            FirebaseFirestore.getInstance()
+                    .collection("posts")
+                    .document(postId)
+                    .collection("typing")
+                    .document(currentUserId)
+                    .delete();
+        }
     }
 
     // Comment model
@@ -182,15 +357,19 @@ public class CommentActivity extends AppCompatActivity {
             holder.usernameText.setText(comment.username != null ? comment.username : "User");
             holder.commentText.setText(comment.text);
             
+            // Format timestamp
+            String timeAgo = getTimeAgo(comment.timestamp);
+            holder.timestampText.setText(timeAgo);
+            
             if (comment.profileImageUrl != null && !comment.profileImageUrl.isEmpty()) {
                 Glide.with(holder.itemView.getContext())
                         .load(comment.profileImageUrl)
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .error(R.drawable.ic_launcher_foreground)
+                        .placeholder(R.drawable.profile_placeholder)
+                        .error(R.drawable.profile_placeholder)
                         .circleCrop()
                         .into(holder.profileImage);
             } else {
-                holder.profileImage.setImageResource(R.drawable.ic_launcher_foreground);
+                holder.profileImage.setImageResource(R.drawable.profile_placeholder);
             }
         }
         
@@ -199,16 +378,31 @@ public class CommentActivity extends AppCompatActivity {
             return comments.size();
         }
         
+        private String getTimeAgo(long timestamp) {
+            long timeDiff = System.currentTimeMillis() - timestamp;
+            long seconds = timeDiff / 1000;
+            long minutes = seconds / 60;
+            long hours = minutes / 60;
+            long days = hours / 24;
+            
+            if (days > 0) return days + "d ago";
+            if (hours > 0) return hours + "h ago";
+            if (minutes > 0) return minutes + "m ago";
+            return "Just now";
+        }
+        
         static class CommentViewHolder extends RecyclerView.ViewHolder {
             ImageView profileImage;
             TextView usernameText;
             TextView commentText;
+            TextView timestampText;
             
             public CommentViewHolder(@NonNull View itemView) {
                 super(itemView);
                 profileImage = itemView.findViewById(R.id.image_comment_user);
                 usernameText = itemView.findViewById(R.id.text_comment_username);
                 commentText = itemView.findViewById(R.id.text_comment_body);
+                timestampText = itemView.findViewById(R.id.text_comment_timestamp);
             }
         }
     }
