@@ -30,6 +30,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.annotation.NonNull;
 import android.view.MenuItem;
 import com.unavify.app.ui.home.UserProfileActivity;
+import com.unavify.app.ui.home.PeopleActivity;
 
 @AndroidEntryPoint
 public class HomeScreenJava extends AppCompatActivity {
@@ -58,37 +59,6 @@ public class HomeScreenJava extends AppCompatActivity {
         // Get the ViewModel using Hilt's ViewModelProvider
         viewModel = new ViewModelProvider(this).get(AuthViewModelJava.class);
 
-        // Setup BottomNavigationView
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
-        bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int id = item.getItemId();
-                if (id == R.id.nav_home) {
-                    // Already on home, do nothing
-                    return true;
-                } else if (id == R.id.nav_add_post) {
-                    Intent addPostIntent = new Intent(HomeScreenJava.this, AddPostActivity.class);
-                    startActivityForResult(addPostIntent, ADD_POST_REQUEST_CODE);
-                    return true;
-                } else if (id == R.id.nav_profile) {
-                    Intent editProfileIntent = new Intent(HomeScreenJava.this, EditProfileActivity.class);
-                    if (currentUsername != null) editProfileIntent.putExtra("username", currentUsername);
-                    if (currentProfileImageUrl != null) editProfileIntent.putExtra("profileImageUrl", currentProfileImageUrl);
-                    startActivity(editProfileIntent);
-                    return true;
-                } else if (id == R.id.nav_sign_out) {
-                    viewModel.signOut();
-                    Intent signOutIntent = new Intent(HomeScreenJava.this, com.unavify.app.ui.auth.LoginScreenJava.class);
-                    signOutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(signOutIntent);
-                    finish();
-                    return true;
-                }
-                return false;
-            }
-        });
-
         recyclerViewPosts = findViewById(R.id.recycler_view_posts);
         recyclerViewPosts.setLayoutManager(new LinearLayoutManager(this));
         postAdapter = new PostAdapter(this, postList);
@@ -107,6 +77,41 @@ public class HomeScreenJava extends AppCompatActivity {
             intent.putExtra("username", user.username);
             intent.putExtra("profile_image_url", user.profileImageUrl);
             startActivity(intent);
+        });
+
+        // Setup BottomNavigationView
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int id = item.getItemId();
+                if (id == R.id.nav_home) {
+                    // Already on home, do nothing
+                    return true;
+                } else if (id == R.id.nav_add_post) {
+                    Intent addPostIntent = new Intent(HomeScreenJava.this, AddPostActivity.class);
+                    startActivityForResult(addPostIntent, ADD_POST_REQUEST_CODE);
+                    return true;
+                } else if (id == R.id.nav_people) {
+                    Intent peopleIntent = new Intent(HomeScreenJava.this, PeopleActivity.class);
+                    startActivity(peopleIntent);
+                    return true;
+                } else if (id == R.id.nav_profile) {
+                    Intent editProfileIntent = new Intent(HomeScreenJava.this, EditProfileActivity.class);
+                    if (currentUsername != null) editProfileIntent.putExtra("username", currentUsername);
+                    if (currentProfileImageUrl != null) editProfileIntent.putExtra("profileImageUrl", currentProfileImageUrl);
+                    startActivity(editProfileIntent);
+                    return true;
+                } else if (id == R.id.nav_sign_out) {
+                    viewModel.signOut();
+                    Intent signOutIntent = new Intent(HomeScreenJava.this, com.unavify.app.ui.auth.LoginScreenJava.class);
+                    signOutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(signOutIntent);
+                    finish();
+                    return true;
+                }
+                return false;
+            }
         });
 
         // Load posts and users
@@ -292,17 +297,23 @@ public class HomeScreenJava extends AppCompatActivity {
                     }
                 }
                 
-                // Add current user first, then other users
+                // Shuffle other users and take first 5
+                java.util.Collections.shuffle(otherUsers);
+                int maxOtherUsers = Math.min(5, otherUsers.size());
+                List<User> randomUsers = otherUsers.subList(0, maxOtherUsers);
+                
+                // Add current user first, then random users
                 if (currentUser != null) {
                     userList.add(currentUser);
                     Log.d("FEED_DEBUG", "Added current user first: " + currentUser.username);
                 }
                 
-                userList.addAll(otherUsers);
+                userList.addAll(randomUsers);
                 
                 userAdapter.notifyDataSetChanged();
                 Log.d("FEED_DEBUG", "User adapter notified, total users: " + userList.size() + 
-                      " (current user first: " + (currentUser != null ? "yes" : "no") + ")");
+                      " (current user first: " + (currentUser != null ? "yes" : "no") + 
+                      ", random users: " + randomUsers.size() + ")");
             })
             .addOnFailureListener(e -> {
                 Log.e("FEED_DEBUG", "Failed to fetch users from Firestore", e);
