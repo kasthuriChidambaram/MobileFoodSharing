@@ -82,7 +82,7 @@ public class CommentActivity extends AppCompatActivity {
             postCaptionText.setText(postCaption);
         }
 
-        adapter = new CommentAdapter(commentList);
+        adapter = new CommentAdapter(commentList, postId, postCaption);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
@@ -339,9 +339,13 @@ public class CommentActivity extends AppCompatActivity {
     // Adapter for comments
     public static class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
         private final List<Comment> comments;
+        private final String postId;
+        private final String postCaption;
         
-        public CommentAdapter(List<Comment> comments) {
+        public CommentAdapter(List<Comment> comments, String postId, String postCaption) {
             this.comments = comments;
+            this.postId = postId;
+            this.postCaption = postCaption;
         }
         
         @NonNull
@@ -371,6 +375,20 @@ public class CommentActivity extends AppCompatActivity {
             } else {
                 holder.profileImage.setImageResource(R.drawable.profile_placeholder);
             }
+
+            // Report button click listener
+            holder.reportButton.setOnClickListener(v -> {
+                android.content.Intent intent = new android.content.Intent(holder.itemView.getContext(), ReportActivity.class);
+                intent.putExtra("postId", this.postId);
+                intent.putExtra("postCaption", this.postCaption);
+                intent.putExtra("contentType", "comment");
+                intent.putExtra("commentId", comment.userId + "_" + comment.timestamp); // Create a unique comment ID
+                if (holder.itemView.getContext() instanceof android.app.Activity) {
+                    ((android.app.Activity) holder.itemView.getContext()).startActivityForResult(intent, 1004);
+                } else {
+                    holder.itemView.getContext().startActivity(intent);
+                }
+            });
         }
         
         @Override
@@ -396,6 +414,7 @@ public class CommentActivity extends AppCompatActivity {
             TextView usernameText;
             TextView commentText;
             TextView timestampText;
+            android.widget.ImageButton reportButton;
             
             public CommentViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -403,6 +422,7 @@ public class CommentActivity extends AppCompatActivity {
                 usernameText = itemView.findViewById(R.id.text_comment_username);
                 commentText = itemView.findViewById(R.id.text_comment_body);
                 timestampText = itemView.findViewById(R.id.text_comment_timestamp);
+                reportButton = itemView.findViewById(R.id.button_report_comment);
             }
         }
     }

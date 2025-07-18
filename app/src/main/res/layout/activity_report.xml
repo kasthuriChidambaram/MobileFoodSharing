@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:id="@+id/text_report_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Report Post"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Help us keep the community safe by reporting inappropriate content."
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Post Caption for Context -->
+        <TextView
+            android:id="@+id/text_post_caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading post details..."
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="#F8F8F8"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+    <!-- Report Reasons -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select a reason for reporting:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="16dp"/>
+
+    <RadioGroup
+        android:id="@+id/radio_group_reasons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+
+        <RadioButton
+            android:id="@+id/radio_spam"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Spam"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginBottom="8dp"/>
+
+        <RadioButton
+            android:id="@+id/radio_inappropriate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Inappropriate Content"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginBottom="8dp"/>
+
+        <RadioButton
+            android:id="@+id/radio_harassment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Harassment or Bullying"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginBottom="8dp"/>
+
+        <RadioButton
+            android:id="@+id/radio_other"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Other"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginBottom="8dp"/>
+
+    </RadioGroup>
+
+    <!-- Other Reason Text Box -->
+    <EditText
+        android:id="@+id/edit_text_other_reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Please specify the reason..."
+        android:textSize="14sp"
+        android:padding="12dp"
+        android:background="@drawable/comment_input_background"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone"
+        android:inputType="textMultiLine"
+        android:maxLines="3"/>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/button_cancel_report"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="@android:color/darker_gray"
+            android:background="@android:color/transparent"
+            android:layout_marginEnd="16dp"
+            android:minWidth="80dp"/>
+
+        <Button
+            android:id="@+id/button_submit_report"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit Report"
+            android:textColor="@android:color/white"
+            android:background="@drawable/send_button_background"
+            android:minWidth="120dp"/>
+
+    </LinearLayout>
+
+</LinearLayout> 

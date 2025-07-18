@@ -128,6 +128,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 context.startActivity(intent);
             }
         });
+
+        // Report button click listener
+        holder.reportButton.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(context, ReportActivity.class);
+            intent.putExtra("postId", post.postId);
+            intent.putExtra("postCaption", post.caption);
+            intent.putExtra("contentType", "post");
+            if (context instanceof android.app.Activity) {
+                ((android.app.Activity) context).startActivityForResult(intent, 1003);
+            } else {
+                context.startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -142,6 +155,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         TextView captionText;
         TextView commentCountText;
         android.widget.ImageButton commentsButton;
+        android.widget.ImageButton reportButton;
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             userImage = itemView.findViewById(R.id.image_user_profile);
@@ -150,6 +164,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             captionText = itemView.findViewById(R.id.text_caption);
             commentCountText = itemView.findViewById(R.id.text_comment_count);
             commentsButton = itemView.findViewById(R.id.button_comments);
+            reportButton = itemView.findViewById(R.id.button_report_post);
         }
     }
 } 
