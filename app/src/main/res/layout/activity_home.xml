@@ -58,16 +58,16 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
-        </LinearLayout>
+                </LinearLayout>
 
         <!-- RecyclerView for posts (no card, edge-to-edge) -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_view_posts"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:overScrollMode="never"
-            android:clipToPadding="false"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view_posts"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:overScrollMode="never"
+                android:clipToPadding="false"
             android:paddingBottom="0dp"/>
 
     </LinearLayout>

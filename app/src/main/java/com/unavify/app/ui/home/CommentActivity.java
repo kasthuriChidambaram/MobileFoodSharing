@@ -122,18 +122,18 @@ public class CommentActivity extends AppCompatActivity {
 
                     if (value != null) {
                         int previousSize = commentList.size();
-                        commentList.clear();
+                    commentList.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            Comment comment = doc.toObject(Comment.class);
-                            if (comment != null) {
-                                commentList.add(comment);
-                            }
+                        Comment comment = doc.toObject(Comment.class);
+                        if (comment != null) {
+                            commentList.add(comment);
                         }
+                    }
                         
                         // Check if new comments were added
                         boolean hasNewComments = commentList.size() > previousSize;
                         
-                        adapter.notifyDataSetChanged();
+                    adapter.notifyDataSetChanged();
                         
                         // Scroll to bottom for new comments with animation
                         if (commentList.size() > 0) {

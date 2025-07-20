@@ -31,6 +31,7 @@ import androidx.annotation.NonNull;
 import android.view.MenuItem;
 import com.unavify.app.ui.home.UserProfileActivity;
 import com.unavify.app.ui.home.PeopleActivity;
+import com.google.android.gms.ads.nativead.NativeAd;
 
 @AndroidEntryPoint
 public class HomeScreenJava extends AppCompatActivity {
@@ -38,8 +39,11 @@ public class HomeScreenJava extends AppCompatActivity {
     private String currentUsername = null;
     private String currentProfileImageUrl = null;
     private RecyclerView recyclerViewPosts;
-    private PostAdapter postAdapter;
+    private UnifiedFeedAdapter feedAdapter;
     private List<Post> postList = new ArrayList<>();
+    private List<Object> feedItems = new ArrayList<>();
+    private AdService adService; // DISABLED - Now using only AdMob ads
+    private AdMobService adMobService; // New AdMob service
     private RecyclerView recyclerViewUsers;
     private UserAdapter userAdapter;
     private List<User> userList = new ArrayList<>();
@@ -61,8 +65,37 @@ public class HomeScreenJava extends AppCompatActivity {
 
         recyclerViewPosts = findViewById(R.id.recycler_view_posts);
         recyclerViewPosts.setLayoutManager(new LinearLayoutManager(this));
-        postAdapter = new PostAdapter(this, postList);
-        recyclerViewPosts.setAdapter(postAdapter);
+        
+        // Initialize ad services
+        // DISABLED: Custom ad service (Firebase ads) - Now using only AdMob
+        // try {
+        //     adService = new AdService();
+        //     Log.d("FEED_DEBUG", "Custom ad service initialized");
+        // } catch (Exception e) {
+        //     Log.e("FEED_DEBUG", "Failed to initialize custom ad service", e);
+        //     adService = null;
+        // }
+        adService = null; // Disabled Firebase custom ads
+        
+        // Initialize AdMob service for automatic ads
+        try {
+            adMobService = new AdMobService(this);
+            Log.d("FEED_DEBUG", "AdMob service initialized");
+        } catch (Exception e) {
+            Log.e("FEED_DEBUG", "Failed to initialize AdMob service", e);
+            adMobService = null;
+        }
+        
+        // Initialize unified feed adapter
+        try {
+            feedAdapter = new UnifiedFeedAdapter(this, feedItems);
+            recyclerViewPosts.setAdapter(feedAdapter);
+        } catch (Exception e) {
+            Log.e("FEED_DEBUG", "Failed to initialize feed adapter", e);
+            // Fallback to simple post adapter
+            PostAdapter fallbackAdapter = new PostAdapter(this, postList);
+            recyclerViewPosts.setAdapter(fallbackAdapter);
+        }
 
         // Setup users RecyclerView
         recyclerViewUsers = findViewById(R.id.recycler_view_users);
@@ -137,6 +170,15 @@ public class HomeScreenJava extends AppCompatActivity {
     private static final int COMMENT_REQUEST_CODE = 1002;
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up AdMob service
+        if (adMobService != null) {
+            adMobService.destroy();
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         
@@ -163,13 +205,115 @@ public class HomeScreenJava extends AppCompatActivity {
         }
     }
 
+    private void updateFeedWithAds() {
+        try {
+            Log.d("FEED_DEBUG", "updateFeedWithAds called - postList size: " + (postList != null ? postList.size() : "null"));
+            Log.d("FEED_DEBUG", "adMobService is: " + (adMobService != null ? "available" : "null"));
+            
+            if (feedItems != null && postList != null) {
+                feedItems.clear();
+                
+                // Use AdMob for automatic ads (primary)
+                if (adMobService != null && adMobService.hasNativeAds()) {
+                    List<Object> feedWithNativeAds = insertNativeAdsIntoFeed(postList);
+                    feedItems.addAll(feedWithNativeAds);
+                    Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts and " + (feedWithNativeAds.size() - postList.size()) + " native ads");
+                } 
+                // No ads available (AdMob not loaded yet or failed)
+                else {
+                    feedItems.addAll(postList);
+                    Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts (AdMob ads not ready yet)");
+                }
+                
+                if (feedAdapter != null) {
+                    feedAdapter.notifyDataSetChanged();
+                    Log.d("FEED_DEBUG", "Feed adapter notified with " + feedItems.size() + " total items");
+                }
+            }
+        } catch (Exception e) {
+            Log.e("FEED_DEBUG", "Error updating feed with ads", e);
+            // Fallback to posts only if ads fail
+            try {
+                feedItems.clear();
+                feedItems.addAll(postList);
+                if (feedAdapter != null) {
+                    feedAdapter.notifyDataSetChanged();
+                }
+                Log.d("FEED_DEBUG", "Fallback: Feed updated with posts only");
+            } catch (Exception fallbackError) {
+                Log.e("FEED_DEBUG", "Fallback also failed", fallbackError);
+            }
+        }
+    }
+    
+    private List<Object> insertNativeAdsIntoFeed(List<Post> posts) {
+        List<Object> feedItems = new ArrayList<>();
+        int adCount = 0;
+        
+        if (posts == null || posts.isEmpty()) {
+            return feedItems;
+        }
+        
+        Log.d("FEED_DEBUG", "Inserting native ads into feed with " + posts.size() + " posts");
+        
+        // Calculate optimal ad positions (similar to custom ad logic)
+        int totalPosts = posts.size();
+        int totalAds = Math.min(3, adMobService.getLoadedNativeAdCount()); // Max 3 ads
+        List<Integer> adPositions = calculateAdPositions(totalPosts, totalAds);
+        
+        Log.d("FEED_DEBUG", "Calculated native ad positions: " + adPositions);
+        
+        for (int i = 0; i < posts.size(); i++) {
+            Post post = posts.get(i);
+            if (post != null) {
+                feedItems.add(post);
+                
+                // Check if we should insert a native ad at this position
+                if (adPositions.contains(i + 1) && adCount < totalAds) {
+                    NativeAd nativeAd = adMobService.getRandomNativeAd();
+                    if (nativeAd != null) {
+                        feedItems.add(nativeAd);
+                        adCount++;
+                        Log.d("FEED_DEBUG", "Inserted native ad at position " + (i + 1));
+                    }
+                }
+            }
+        }
+        
+        Log.d("FEED_DEBUG", "Feed created with " + posts.size() + " posts and " + adCount + " native ads");
+        return feedItems;
+    }
+    
+    private List<Integer> calculateAdPositions(int totalPosts, int totalAds) {
+        List<Integer> positions = new ArrayList<>();
+        
+        if (totalAds == 0 || totalPosts == 0) {
+            return positions;
+        }
+        
+        // Distribute ads evenly across the feed
+        int spacing = totalPosts / (totalAds + 1);
+        Log.d("FEED_DEBUG", "Calculating native ad positions: " + totalPosts + " posts, " + totalAds + " ads, spacing: " + spacing);
+        
+        for (int i = 1; i <= totalAds; i++) {
+            int position = i * spacing;
+            if (position <= totalPosts) {
+                positions.add(position);
+                Log.d("FEED_DEBUG", "Native ad " + i + " will be at position " + position);
+            }
+        }
+        
+        return positions;
+    }
+
     private void loadPosts() {
-        Log.d("FEED_DEBUG", "loadPosts: Fetching posts from Firestore");
-        FirebaseFirestore.getInstance()
-            .collection("posts")
-            .whereEqualTo("isPublic", true)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
+        try {
+            Log.d("FEED_DEBUG", "loadPosts: Fetching posts from Firestore");
+            FirebaseFirestore.getInstance()
+                .collection("posts")
+                .whereEqualTo("isPublic", true)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
             .addOnSuccessListener(querySnapshot -> {
                 postList.clear();
                 int fetchedCount = querySnapshot.getDocuments().size();
@@ -206,13 +350,13 @@ public class HomeScreenJava extends AppCompatActivity {
                                         int commentCount = commentsSnapshot.size();
                                         Log.d("FEED_DEBUG", "Comment count for post " + postId + " (caption: " + caption + "): " + commentCount);
                                         postList.add(new Post(postId, userId, username, userProfileImageUrl, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
-                                        postAdapter.notifyDataSetChanged();
+                                        updateFeedWithAds();
                                         Log.d("FEED_DEBUG", "Adapter notified after adding post with user info and comment count: postId=" + postId + ", commentCount=" + commentCount);
                                     })
                                     .addOnFailureListener(e -> {
                                         Log.e("FEED_DEBUG", "Failed to fetch comment count for post " + postId, e);
                                         postList.add(new Post(postId, userId, username, userProfileImageUrl, caption, isPublic, taggedUserPhones, mediaUrl, 0));
-                                        postAdapter.notifyDataSetChanged();
+                                        updateFeedWithAds();
                                         Log.d("FEED_DEBUG", "Adapter notified after adding post with user info and default comment count: postId=" + postId);
                                     });
                             })
@@ -227,12 +371,12 @@ public class HomeScreenJava extends AppCompatActivity {
                                     .addOnSuccessListener(commentsSnapshot -> {
                                         int commentCount = commentsSnapshot.size();
                                         postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
-                                        postAdapter.notifyDataSetChanged();
+                                        updateFeedWithAds();
                                         Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info and comment count: postId=" + postId);
                                     })
                                     .addOnFailureListener(commentError -> {
                                         postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
-                                postAdapter.notifyDataSetChanged();
+                                        updateFeedWithAds();
                                         Log.d("FEED_DEBUG", "Adapter notified after adding post with default user info and default comment count: postId=" + postId);
                                     });
                             });
@@ -245,14 +389,14 @@ public class HomeScreenJava extends AppCompatActivity {
                             .get()
                             .addOnSuccessListener(commentsSnapshot -> {
                                 int commentCount = commentsSnapshot.size();
-                                postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
-                                postAdapter.notifyDataSetChanged();
-                                Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and comment count: postId=" + postId);
+                                                        postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, commentCount));
+                        updateFeedWithAds();
+                        Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and comment count: postId=" + postId);
                             })
                             .addOnFailureListener(e -> {
-                                postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
-                        postAdapter.notifyDataSetChanged();
-                                Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and default comment count: postId=" + postId);
+                                                        postList.add(new Post(postId, userId, "User", null, caption, isPublic, taggedUserPhones, mediaUrl, 0));
+                        updateFeedWithAds();
+                        Log.d("FEED_DEBUG", "Adapter notified after adding post with no phone and default comment count: postId=" + postId);
                             });
                     }
                 }
@@ -260,7 +404,12 @@ public class HomeScreenJava extends AppCompatActivity {
             .addOnFailureListener(e -> {
                 Log.e("FEED_DEBUG", "Failed to fetch posts from Firestore", e);
             });
+        } catch (Exception e) {
+            Log.e("FEED_DEBUG", "Error in loadPosts", e);
+        }
     }
+
+
 
     private void loadCommunityMembers() {
         Log.d("FEED_DEBUG", "loadCommunityMembers: Fetching users from Firestore");

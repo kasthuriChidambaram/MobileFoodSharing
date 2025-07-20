@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="0dp">
+
+    <!-- Ad Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/image_advertiser_logo"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Advertiser Logo"
+            android:src="@drawable/profile_placeholder" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:id="@+id/text_advertiser_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Advertiser Name"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sponsored"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray" />
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/button_ad_more"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Ad Options"
+            android:src="@android:drawable/ic_menu_more"
+            android:padding="4dp"/>
+
+    </LinearLayout>
+
+    <!-- Ad Image -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/image_ad_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="8dp"
+        android:contentDescription="Ad Content" />
+
+    <!-- Ad Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/text_ad_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ad Title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/text_ad_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ad description goes here..."
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:lineSpacingExtra="2dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Call to Action Button -->
+        <Button
+            android:id="@+id/button_call_to_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Learn More"
+            android:textColor="@android:color/white"
+            android:background="@drawable/send_button_background"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Ad Footer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:background="#F8F8F8">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Ad"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="start" />
+
+        <TextView
+            android:id="@+id/text_ad_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Why you're seeing this ad"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="end"
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout> 

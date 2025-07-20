@@ -61,7 +61,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         holder.itemView.setOnClickListener(v -> {
             if (onUserClickListener != null) {
                 onUserClickListener.onUserClick(user);
-            }
+        }
         });
     }
 
