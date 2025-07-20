@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
+import com.google.android.gms.ads.nativead.MediaView;
 import com.unavify.app.R;
 import com.unavify.app.ui.home.ReportActivity;
 
@@ -23,7 +24,7 @@ public class NativeAdViewHolder extends RecyclerView.ViewHolder {
     private final ImageView adIcon;
     private final TextView adHeadline;
     private final TextView adAdvertiser;
-    private final ImageView adImage;
+    private final MediaView adMedia;
     private final TextView adBody;
     private final Button adCallToAction;
     private final ImageButton btnReportAd;
@@ -34,11 +35,11 @@ public class NativeAdViewHolder extends RecyclerView.ViewHolder {
         this.context = context;
         
         // Initialize views
-        nativeAdView = itemView.findViewById(R.id.native_ad_view);
+        nativeAdView = (NativeAdView) itemView;
         adIcon = itemView.findViewById(R.id.ad_icon);
         adHeadline = itemView.findViewById(R.id.ad_headline);
         adAdvertiser = itemView.findViewById(R.id.ad_advertiser);
-        adImage = itemView.findViewById(R.id.ad_image);
+        adMedia = itemView.findViewById(R.id.ad_media);
         adBody = itemView.findViewById(R.id.ad_body);
         adCallToAction = itemView.findViewById(R.id.ad_call_to_action);
         btnReportAd = itemView.findViewById(R.id.btn_report_ad);
@@ -97,17 +98,13 @@ public class NativeAdViewHolder extends RecyclerView.ViewHolder {
                 nativeAdView.setCallToActionView(adCallToAction);
             }
             
-            // Bind image
-            if (nativeAd.getImages() != null && !nativeAd.getImages().isEmpty()) {
-                adImage.setVisibility(View.VISIBLE);
-                Glide.with(context)
-                    .load(nativeAd.getImages().get(0).getDrawable())
-                    .placeholder(android.R.color.darker_gray)
-                    .error(android.R.color.darker_gray)
-                    .into(adImage);
-                nativeAdView.setImageView(adImage);
+            // Bind media (using MediaView instead of ImageView)
+            if (nativeAd.getMediaContent() != null) {
+                adMedia.setVisibility(View.VISIBLE);
+                adMedia.setMediaContent(nativeAd.getMediaContent());
+                nativeAdView.setMediaView(adMedia);
             } else {
-                adImage.setVisibility(View.GONE);
+                adMedia.setVisibility(View.GONE);
             }
             
             // Bind icon

@@ -80,6 +80,25 @@ public class HomeScreenJava extends AppCompatActivity {
         // Initialize AdMob service for automatic ads
         try {
             adMobService = new AdMobService(this);
+            adMobService.setOnAdsLoadedListener(new AdMobService.OnAdsLoadedListener() {
+                @Override
+                public void onNativeAdsLoaded(int count) {
+                    Log.d("FEED_DEBUG", "AdMob native ads loaded successfully! Count: " + count);
+                    // Refresh the feed when ads are loaded
+                    runOnUiThread(() -> {
+                        updateFeedWithAds();
+                        Toast.makeText(HomeScreenJava.this, "AdMob ads loaded: " + count, Toast.LENGTH_SHORT).show();
+                    });
+                }
+                
+                @Override
+                public void onAdsLoadFailed(String error) {
+                    Log.e("FEED_DEBUG", "AdMob ads failed to load: " + error);
+                    runOnUiThread(() -> {
+                        Toast.makeText(HomeScreenJava.this, "AdMob ads failed: " + error, Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
             Log.d("FEED_DEBUG", "AdMob service initialized");
         } catch (Exception e) {
             Log.e("FEED_DEBUG", "Failed to initialize AdMob service", e);
@@ -204,6 +223,17 @@ public class HomeScreenJava extends AppCompatActivity {
             Log.d("FEED_DEBUG", "Not the right request code or result code");
         }
     }
+    
+    // Method to manually refresh ads (useful for debugging)
+    public void refreshAdsManually() {
+        Log.d("FEED_DEBUG", "Manually refreshing ads...");
+        if (adMobService != null) {
+            adMobService.refreshAds();
+            Toast.makeText(this, "Refreshing AdMob ads...", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "AdMob service not available", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void updateFeedWithAds() {
         try {
@@ -213,16 +243,42 @@ public class HomeScreenJava extends AppCompatActivity {
             if (feedItems != null && postList != null) {
                 feedItems.clear();
                 
-                // Use AdMob for automatic ads (primary)
-                if (adMobService != null && adMobService.hasNativeAds()) {
-                    List<Object> feedWithNativeAds = insertNativeAdsIntoFeed(postList);
-                    feedItems.addAll(feedWithNativeAds);
-                    Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts and " + (feedWithNativeAds.size() - postList.size()) + " native ads");
-                } 
-                // No ads available (AdMob not loaded yet or failed)
-                else {
+                // Check if AdMob ads are available
+                if (adMobService != null) {
+                    boolean hasAds = adMobService.hasNativeAds();
+                    boolean isLoading = adMobService.isAdsLoading();
+                    int adCount = adMobService.getLoadedNativeAdCount();
+                    
+                    Log.d("FEED_DEBUG", "AdMob status - hasAds: " + hasAds + ", isLoading: " + isLoading + ", adCount: " + adCount);
+                    
+                    if (hasAds) {
+                        // Ads are loaded, insert them into feed
+                        List<Object> feedWithNativeAds = insertNativeAdsIntoFeed(postList);
+                        feedItems.addAll(feedWithNativeAds);
+                        Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts and " + (feedWithNativeAds.size() - postList.size()) + " native ads");
+                    } else if (isLoading) {
+                        // Ads are still loading, show posts only for now
+                        feedItems.addAll(postList);
+                        Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts (AdMob ads still loading)");
+                        
+                        // Set up a retry mechanism to refresh when ads are ready
+                        new android.os.Handler().postDelayed(() -> {
+                            if (adMobService.hasNativeAds()) {
+                                Log.d("FEED_DEBUG", "Retrying feed update with loaded ads");
+                                updateFeedWithAds();
+                            }
+                        }, 5000); // Retry after 5 seconds
+                    } else {
+                        // No ads available and not loading, try to load them
+                        Log.d("FEED_DEBUG", "No ads available, attempting to load AdMob ads");
+                        adMobService.loadNativeAds();
+                        feedItems.addAll(postList);
+                        Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts (triggered ad loading)");
+                    }
+                } else {
+                    // No AdMob service available
                     feedItems.addAll(postList);
-                    Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts (AdMob ads not ready yet)");
+                    Log.d("FEED_DEBUG", "Feed updated with " + postList.size() + " posts (no AdMob service)");
                 }
                 
                 if (feedAdapter != null) {

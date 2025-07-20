@@ -11,12 +11,6 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdOptions;
-import com.google.android.gms.ads.AdLoadCallback;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import androidx.annotation.NonNull;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdLoader;
@@ -24,6 +18,11 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdOptions;
 import androidx.annotation.NonNull;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class AdMobService {
     private static final String TAG = "AdMobService";
@@ -38,6 +37,13 @@ public class AdMobService {
     private final List<InterstitialAd> loadedInterstitialAds;
     private final Random random;
     private boolean isInitialized = false;
+    private boolean isNativeAdsLoading = false;
+    private OnAdsLoadedListener adsLoadedListener;
+    
+    public interface OnAdsLoadedListener {
+        void onNativeAdsLoaded(int count);
+        void onAdsLoadFailed(String error);
+    }
     
     public AdMobService(Context context) {
         this.context = context;
@@ -47,8 +53,13 @@ public class AdMobService {
         initializeAdMob();
     }
     
+    public void setOnAdsLoadedListener(OnAdsLoadedListener listener) {
+        this.adsLoadedListener = listener;
+    }
+    
     private void initializeAdMob() {
         try {
+            Log.d(TAG, "Initializing AdMob...");
             MobileAds.initialize(context, initializationStatus -> {
                 Log.d(TAG, "AdMob initialized successfully");
                 isInitialized = true;
@@ -57,14 +68,25 @@ public class AdMobService {
             });
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize AdMob", e);
+            if (adsLoadedListener != null) {
+                adsLoadedListener.onAdsLoadFailed("AdMob initialization failed: " + e.getMessage());
+            }
         }
     }
     
     public void loadNativeAds() {
         if (!isInitialized) {
-            Log.w(TAG, "AdMob not initialized yet");
+            Log.w(TAG, "AdMob not initialized yet, will retry when initialized");
             return;
         }
+        
+        if (isNativeAdsLoading) {
+            Log.d(TAG, "Native ads already loading, skipping...");
+            return;
+        }
+        
+        Log.d(TAG, "Starting to load native ads...");
+        isNativeAdsLoading = true;
         
         // Load multiple native ads for variety
         for (int i = 0; i < 3; i++) {
@@ -74,6 +96,7 @@ public class AdMobService {
 
     private void loadSingleNativeAd() {
         try {
+            Log.d(TAG, "Loading single native ad...");
             AdRequest adRequest = new AdRequest.Builder().build();
 
             NativeAdOptions nativeAdOptions = new NativeAdOptions.Builder()
@@ -85,19 +108,41 @@ public class AdMobService {
                     .forNativeAd(new NativeAd.OnNativeAdLoadedListener() {
                         @Override
                         public void onNativeAdLoaded(@NonNull NativeAd nativeAd) {
-                            Log.d(TAG, "Native ad loaded successfully");
+                            Log.d(TAG, "Native ad loaded successfully! Total loaded: " + (loadedNativeAds.size() + 1));
                             loadedNativeAds.add(nativeAd);
 
                             nativeAd.setOnPaidEventListener(adValue -> {
                                 Log.d(TAG, "Native ad paid event: " +
                                         adValue.getCurrencyCode() + " " + adValue.getValueMicros());
                             });
+                            
+                            // Check if we've loaded enough ads
+                            if (loadedNativeAds.size() >= 3) {
+                                isNativeAdsLoading = false;
+                                Log.d(TAG, "All native ads loaded successfully! Total: " + loadedNativeAds.size());
+                                if (adsLoadedListener != null) {
+                                    adsLoadedListener.onNativeAdsLoaded(loadedNativeAds.size());
+                                }
+                            }
                         }
                     })
                     .withAdListener(new AdListener() {
                         @Override
                         public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                            Log.e(TAG, "Native ad failed to load: " + loadAdError.getMessage());
+                            Log.e(TAG, "Native ad failed to load: " + loadAdError.getMessage() + " Code: " + loadAdError.getCode());
+                            isNativeAdsLoading = false;
+                            
+                            // If no ads loaded at all, notify failure
+                            if (loadedNativeAds.isEmpty()) {
+                                if (adsLoadedListener != null) {
+                                    adsLoadedListener.onAdsLoadFailed("Failed to load any native ads: " + loadAdError.getMessage());
+                                }
+                            }
+                        }
+                        
+                        @Override
+                        public void onAdLoaded() {
+                            Log.d(TAG, "Ad loaded callback triggered");
                         }
                     })
                     .withNativeAdOptions(nativeAdOptions)
@@ -107,6 +152,10 @@ public class AdMobService {
 
         } catch (Exception e) {
             Log.e(TAG, "Error loading native ad", e);
+            isNativeAdsLoading = false;
+            if (adsLoadedListener != null) {
+                adsLoadedListener.onAdsLoadFailed("Exception loading native ad: " + e.getMessage());
+            }
         }
     }
     
@@ -181,7 +230,7 @@ public class AdMobService {
         
         int index = random.nextInt(loadedNativeAds.size());
         NativeAd ad = loadedNativeAds.get(index);
-        Log.d(TAG, "Returning native ad");
+        Log.d(TAG, "Returning native ad from " + loadedNativeAds.size() + " available ads");
         return ad;
     }
     
@@ -198,7 +247,9 @@ public class AdMobService {
     }
     
     public int getLoadedNativeAdCount() {
-        return loadedNativeAds.size();
+        int count = loadedNativeAds.size();
+        Log.d(TAG, "Current loaded native ad count: " + count);
+        return count;
     }
     
     public int getLoadedAdCount() {
@@ -206,17 +257,24 @@ public class AdMobService {
     }
     
     public boolean hasNativeAds() {
-        return !loadedNativeAds.isEmpty();
+        boolean hasAds = !loadedNativeAds.isEmpty();
+        Log.d(TAG, "Has native ads: " + hasAds + " (count: " + loadedNativeAds.size() + ")");
+        return hasAds;
     }
     
     public boolean hasAds() {
         return !loadedNativeAds.isEmpty() || !loadedInterstitialAds.isEmpty();
     }
     
+    public boolean isAdsLoading() {
+        return isNativeAdsLoading;
+    }
+    
     public void refreshAds() {
         Log.d(TAG, "Refreshing ads");
         loadedNativeAds.clear();
         loadedInterstitialAds.clear();
+        isNativeAdsLoading = false;
         loadNativeAds();
         loadInterstitialAds();
     }
@@ -224,6 +282,7 @@ public class AdMobService {
     public void destroy() {
         loadedNativeAds.clear();
         loadedInterstitialAds.clear();
+        isNativeAdsLoading = false;
         Log.d(TAG, "AdMob service destroyed");
     }
 }
