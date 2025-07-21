@@ -69,11 +69,11 @@ public class EditProfileActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 saveButton.setEnabled(true);
                 if (result instanceof ProfileSaveResult.Success) {
-                    Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
+    
                     goToHome();
                 } else if (result instanceof ProfileSaveResult.Error) {
                     String message = ((ProfileSaveResult.Error) result).getMessage();
-                    Toast.makeText(this, "Error: " + message, Toast.LENGTH_SHORT).show();
+
                 }
             }
         });

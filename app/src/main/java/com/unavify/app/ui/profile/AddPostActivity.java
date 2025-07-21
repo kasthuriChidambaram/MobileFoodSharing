@@ -78,12 +78,10 @@ public class AddPostActivity extends AppCompatActivity {
 
         uploadButton.setOnClickListener(v -> {
             if (selectedMediaUri == null) {
-                Toast.makeText(this, "Please select a photo or video", Toast.LENGTH_SHORT).show();
                 return;
             }
             String caption = captionEditText.getText().toString().trim();
             if (TextUtils.isEmpty(caption)) {
-                Toast.makeText(this, "Please enter a caption", Toast.LENGTH_SHORT).show();
                 return;
             }
             validateAndUploadMedia(selectedMediaUri, caption);
@@ -171,17 +169,11 @@ public class AddPostActivity extends AppCompatActivity {
         
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show();
                 showMediaPickerDialog(); // Show picker again after permission granted
-            } else {
-                Toast.makeText(this, "Camera permission is required to take photos/videos", Toast.LENGTH_LONG).show();
             }
         } else if (requestCode == STORAGE_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
                 showMediaPickerDialog(); // Show picker again after permission granted
-            } else {
-                Toast.makeText(this, "Storage permission is required to select media", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -214,8 +206,6 @@ public class AddPostActivity extends AppCompatActivity {
                 if (success && selectedMediaUri != null) {
                     isVideo = true;
                     mediaPreview.setImageURI(selectedMediaUri);
-                } else {
-                    Toast.makeText(this, "Video capture failed", Toast.LENGTH_SHORT).show();
                 }
             }
     );
@@ -256,14 +246,7 @@ public class AddPostActivity extends AppCompatActivity {
         uploadButton.setEnabled(false);
         progressBar.setProgress(0);
 
-        // Show initial processing message
-        runOnUiThread(() -> {
-            if (!isVideo) {
-                Toast.makeText(this, "Processing image...", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Processing video...", Toast.LENGTH_SHORT).show();
-            }
-        });
+
 
         executorService.execute(() -> {
             try {
@@ -287,11 +270,6 @@ public class AddPostActivity extends AppCompatActivity {
                     inputStream.close();
                     
                     int maxDimension = Math.max(options.outWidth, options.outHeight);
-                    if (maxDimension > MAX_IMAGE_DIMENSION) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "Compressing high-resolution image...", Toast.LENGTH_SHORT).show();
-                        });
-                    }
                 }
 
                 // Compress media if needed
@@ -300,14 +278,12 @@ public class AddPostActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
                         uploadButton.setEnabled(true);
-                        Toast.makeText(this, "Failed to process media", Toast.LENGTH_SHORT).show();
                     });
                     return;
                 }
 
                 // Upload to Firebase
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Uploading to server...", Toast.LENGTH_SHORT).show();
                     uploadToFirebase(processedUri, caption, isVideo ? "videos" : "images");
                 });
 
@@ -316,7 +292,6 @@ public class AddPostActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     uploadButton.setEnabled(true);
-                    Toast.makeText(this, "Error processing media: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
         });
@@ -553,7 +528,6 @@ public class AddPostActivity extends AppCompatActivity {
         })).addOnFailureListener(e -> {
             progressBar.setVisibility(View.GONE);
             uploadButton.setEnabled(true);
-            Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -566,8 +540,6 @@ public class AddPostActivity extends AppCompatActivity {
                 .add(post)
                 .addOnSuccessListener(documentReference -> {
                     progressBar.setVisibility(View.GONE);
-                    String message = isVideo ? "Video uploaded successfully!" : "Image uploaded successfully!";
-                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                     
                     // Set result to indicate successful post upload
                     Intent resultIntent = new Intent();
@@ -579,7 +551,6 @@ public class AddPostActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     uploadButton.setEnabled(true);
-                    Toast.makeText(this, "Failed to save post: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 

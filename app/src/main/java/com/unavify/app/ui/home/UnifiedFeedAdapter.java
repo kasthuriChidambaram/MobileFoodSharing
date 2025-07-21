@@ -145,10 +145,8 @@ public class UnifiedFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(adPost.adLinkUrl));
                         context.startActivity(intent);
                     } catch (Exception e) {
-                        android.widget.Toast.makeText(context, "Unable to open link", android.widget.Toast.LENGTH_SHORT).show();
+                        // Link opening failed silently
                     }
-                } else {
-                    android.widget.Toast.makeText(context, "Link not available", android.widget.Toast.LENGTH_SHORT).show();
                 }
             });
             
@@ -193,7 +191,7 @@ public class UnifiedFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                            "You can control ad preferences in your settings.")
                 .setPositiveButton("OK", null)
                 .setNegativeButton("Hide this ad", (dialog, which) -> {
-                    android.widget.Toast.makeText(context, "Ad hidden", android.widget.Toast.LENGTH_SHORT).show();
+                    // Ad hidden silently
                 })
                 .show();
     }
@@ -218,8 +216,7 @@ public class UnifiedFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                             }
                             break;
                         case 1:
-                            // Hide ad
-                            android.widget.Toast.makeText(context, "Ad hidden", android.widget.Toast.LENGTH_SHORT).show();
+                            // Hide ad silently
                             break;
                         case 2:
                             // Why this ad

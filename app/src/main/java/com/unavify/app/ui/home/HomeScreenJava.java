@@ -87,16 +87,12 @@ public class HomeScreenJava extends AppCompatActivity {
                     // Refresh the feed when ads are loaded
                     runOnUiThread(() -> {
                         updateFeedWithAds();
-                        Toast.makeText(HomeScreenJava.this, "AdMob ads loaded: " + count, Toast.LENGTH_SHORT).show();
                     });
                 }
                 
                 @Override
                 public void onAdsLoadFailed(String error) {
                     Log.e("FEED_DEBUG", "AdMob ads failed to load: " + error);
-                    runOnUiThread(() -> {
-                        Toast.makeText(HomeScreenJava.this, "AdMob ads failed: " + error, Toast.LENGTH_LONG).show();
-                    });
                 }
             });
             Log.d("FEED_DEBUG", "AdMob service initialized");
@@ -229,9 +225,6 @@ public class HomeScreenJava extends AppCompatActivity {
         Log.d("FEED_DEBUG", "Manually refreshing ads...");
         if (adMobService != null) {
             adMobService.refreshAds();
-            Toast.makeText(this, "Refreshing AdMob ads...", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "AdMob service not available", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -374,7 +367,6 @@ public class HomeScreenJava extends AppCompatActivity {
                 postList.clear();
                 int fetchedCount = querySnapshot.getDocuments().size();
                 Log.d("FEED_DEBUG", "Fetched posts: " + fetchedCount);
-                Toast.makeText(this, "Fetched posts: " + fetchedCount, Toast.LENGTH_LONG).show();
                 for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
                     String postId = doc.getId();
                     String userId = doc.getString("userId");

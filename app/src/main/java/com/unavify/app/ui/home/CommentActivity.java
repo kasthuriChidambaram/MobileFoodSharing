@@ -143,7 +143,7 @@ public class CommentActivity extends AppCompatActivity {
                                 
                                 // Show a subtle notification for new comments
                                 if (commentList.size() > previousSize && previousSize > 0) {
-                                    Toast.makeText(this, "New comment added!", Toast.LENGTH_SHORT).show();
+                        
                                 }
                             }
                         }
@@ -240,7 +240,7 @@ public class CommentActivity extends AppCompatActivity {
     private void sendComment() {
         String text = commentEditText.getText().toString().trim();
         if (TextUtils.isEmpty(text)) {
-            Toast.makeText(this, "Please enter a comment", Toast.LENGTH_SHORT).show();
+
             return;
         }
 
@@ -278,7 +278,7 @@ public class CommentActivity extends AppCompatActivity {
                             commentEditText.setText("");
                             sendButton.setEnabled(true);
                             updateTypingStatus(false);
-                            Toast.makeText(this, "Comment added!", Toast.LENGTH_SHORT).show();
+                
                             
                             // Set result to indicate comment was added
                             setResult(RESULT_OK);

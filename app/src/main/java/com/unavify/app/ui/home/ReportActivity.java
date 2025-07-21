@@ -153,7 +153,7 @@ public class ReportActivity extends AppCompatActivity {
             .collection("reportedPosts")
             .add(reportData)
             .addOnSuccessListener(documentReference -> {
-                Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+    
                 setResult(RESULT_OK);
                 finish();
             })

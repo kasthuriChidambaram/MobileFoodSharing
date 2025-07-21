@@ -209,7 +209,7 @@ public class LoginScreenJava extends AppCompatActivity {
     }
     
     private void onLoginSuccess() {
-        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+        
         Intent intent = new Intent(this, SplashActivity.class);
         startActivity(intent);
         finish();
