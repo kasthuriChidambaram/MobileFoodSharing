@@ -103,13 +103,17 @@ public class AddPostActivity extends AppCompatActivity {
                 .setItems(options, (dialog, which) -> {
                     switch (which) {
                         case 0: // Take Photo
+                            pendingAction = 0; // Set pending action for camera
                             if (checkCameraPermission()) {
                                 takePhotoLauncher.launch(null);
+                                pendingAction = -1; // Reset if permission already granted
                             }
                             break;
                         case 1: // Select Photo
+                            pendingAction = 1; // Set pending action for gallery
                             if (checkStoragePermission()) {
                                 pickPhotoLauncher.launch("image/*");
+                                pendingAction = -1; // Reset if permission already granted
                             }
                             break;
                     }
@@ -162,6 +166,9 @@ public class AddPostActivity extends AppCompatActivity {
 
     private static final int CAMERA_PERMISSION_REQUEST = 1001;
     private static final int STORAGE_PERMISSION_REQUEST = 1002;
+    
+    // Track which action was requested before permission check
+    private int pendingAction = -1; // -1 = none, 0 = camera, 1 = gallery
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -169,11 +176,19 @@ public class AddPostActivity extends AppCompatActivity {
         
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                showMediaPickerDialog(); // Show picker again after permission granted
+                // Permission granted, directly launch camera
+                if (pendingAction == 0) {
+                    takePhotoLauncher.launch(null);
+                    pendingAction = -1; // Reset pending action
+                }
             }
         } else if (requestCode == STORAGE_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                showMediaPickerDialog(); // Show picker again after permission granted
+                // Permission granted, directly launch gallery picker
+                if (pendingAction == 1) {
+                    pickPhotoLauncher.launch("image/*");
+                    pendingAction = -1; // Reset pending action
+                }
             }
         }
     }
