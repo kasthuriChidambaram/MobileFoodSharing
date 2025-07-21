@@ -53,8 +53,9 @@ public class UserProfileRepository {
             callback.onFailure("User not authenticated");
             return;
         }
+        
         if (profileImageUri != null) {
-            // Upload image to Firebase Storage
+            // Upload new image to Firebase Storage
             String fileName = "profile_images/" + phoneNumber + ".jpg";
             StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(fileName);
             storageRef.putFile(profileImageUri)
@@ -67,9 +68,29 @@ public class UserProfileRepository {
                     callback.onFailure("Image upload failed: " + e.getMessage());
                 });
         } else {
-            // No image selected, just save username
-            saveProfileToFirestore(username, null, phoneNumber, callback);
+            // No new image selected, preserve existing image URL
+            preserveExistingImageAndSaveProfile(username, phoneNumber, callback);
         }
+    }
+
+    private void preserveExistingImageAndSaveProfile(String username, String phoneNumber, SaveProfileCallback callback) {
+        // First get the existing profile to preserve the image URL
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(phoneNumber)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String existingImageUrl = null;
+                if (documentSnapshot.exists()) {
+                    existingImageUrl = documentSnapshot.getString("profileImageUrl");
+                }
+                // Save profile with existing image URL (or null if no existing image)
+                saveProfileToFirestore(username, existingImageUrl, phoneNumber, callback);
+            })
+            .addOnFailureListener(e -> {
+                // If we can't get existing profile, save with null image URL
+                saveProfileToFirestore(username, null, phoneNumber, callback);
+            });
     }
 
     private void saveProfileToFirestore(String username, String imageUrl, String phoneNumber, SaveProfileCallback callback) {
